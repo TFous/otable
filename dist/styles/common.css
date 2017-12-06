@@ -1,0 +1,35 @@
+@import url(../zTreeStyle/zTreeStyle.css);
+@import url(../fontStyle/iconfont.css);
+.tableBtn .ivu-btn{
+  margin:0px 4px;
+}
+.edit .ivu-select-dropdown{
+  position: absolute!important;
+}
+
+.xtable-left{
+  display: inline-block;
+  width:49%;
+  word-wrap:break-word;
+  position: relative;
+}
+.details .xtable-left{
+  overflow: hidden;
+}
+
+.hx-drapMenu{
+  height:300px;
+  overflow-y: auto;
+}
+
+/*弹出层内部元素长度*/
+.formDialog .el-input-number{
+  width:100%!important;
+}
+.formDialog .el-select{
+  width:100%!important;
+}
+
+.formDialog .el-date-editor.el-input{
+  width:100%!important;
+}
