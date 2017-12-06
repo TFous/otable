@@ -15,6 +15,7 @@
               :label="item.title"
               sortable
               :filters="item.filters"
+              :filter-method="filterFn"
               filter-placement="bottom-end"
               :width="item.width">
             </el-table-column>

@@ -181,6 +181,7 @@ export const options = {
   pager_CurrentPage: 1, // 当前第几页
   pager_Total: 0,   // 总页数
   tableData: [],  // 所有的增删改拆后的数据覆盖存储
+  initTableData: [],  // 没有经过数据字典转化的数据
   add_Window_Visible: false,   // 新增弹窗显示状态
   addSucess: null,   // 新增成功后返回的对象
   edit_Window_Visible: false,  // 修改弹窗显示状态
