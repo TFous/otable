@@ -95,7 +95,6 @@
       this.$xvuex.registerModule(this, this.options, this.options.gridKey)
     },
     mounted() {
-      this.getDicMsg()
       this.loadingFn()
     },
     destroyed() {
@@ -231,8 +230,9 @@
       filterFn(value, row) {
 //        console.log(value, row)
       },
-//     初始化url
+//     初始化url,获取数据字典数据
       loadingFn() {
+        this.getDicMsg()
         let url = this.getState.url
         let urlParameter = this.getState.urlParameter
         let isFirst = false
@@ -251,34 +251,17 @@
       //        获取表格和数据字典数据
       getList() {
         let tableUrl = this.getState.requestUrl
+        let requestUrl = Vue.prototype.$api.request(tableUrl)
+        console.log(requestUrl)
         let _this = this
-        let myRequests = [Vue.prototype.$api.request(tableUrl)]
-//        避免数据字典重复请求
-        let urlsValues = this.urlsValues
-        this.urlsKey.forEach(function (key, index) {
-          // 模块已存在则返回
-          if (_this.$store.state[key]) {
-            return
-          }
-          myRequests.push(Vue.prototype.$api.request(urlsValues[index]))
-        })
+        let myRequests = []
         Promise.all(myRequests.map(myRequest =>
           fetch(myRequest).then(resp => {
             return resp.json()
           })
         )).then(datas => {
-          datas.forEach(function (data, index) {
-            if (index === 0) { // 第一个是table
-              _this.$store.dispatch(_this.options.gridKey + 'setData', {initTableData: data.value})
-            } else {
-//              注册数据字典
-              let gridKey = _this.urlsKey[index - 1]
-              let initState = {
-                data: data
-              }
-              _this.registerModule(initState, gridKey)
-            }
-          })
+          console.log(datas)
+//            _this.$store.dispatch(_this.options.gridKey + 'setData', {initTableData: data.value})
         })
       },
 //      注册模块
@@ -307,6 +290,31 @@
         let urlsValues = Object.values(urls)
         this.urlsKey = urlsKey
         this.urlsValues = urlsValues
+
+        let _this = this
+        let myRequests = []
+//        避免数据字典重复请求
+        urlsKey.forEach(function (key, index) {
+          // 模块已存在则返回
+          if (_this.$store.state[key]) {
+            return
+          }
+          myRequests.push(Vue.prototype.$api.request(urlsValues[index]))
+        })
+        Promise.all(myRequests.map(myRequest =>
+          fetch(myRequest).then(resp => {
+            return resp.json()
+          })
+        )).then(datas => {
+          datas.forEach(function (data, index) {
+//              注册数据字典
+            let gridKey = _this.urlsKey[index - 1]
+            let initState = {
+              data: data
+            }
+            _this.registerModule(initState, gridKey)
+          })
+        })
       },
       refreshFn() {
 

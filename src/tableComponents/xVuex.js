@@ -194,7 +194,7 @@ export const options = {
   timeSelectKey: '', // 存储搜索key
   defaultSearch: '',  // 默认 搜索选项
   disabledSearch: false, // 是否禁用搜索下拉 true：禁用
-  pager_Opts: [15, 50, 100],  // 每页展示数量
+  pager_size_opts: [15, 50, 100],  // 每页展示数量
   pager_Size: 15,   //  默认显示每页数量，和opts第一个一样
   pager_CurrentPage: 1, // 当前第几页
   pager_Total: 0,   // 总页数

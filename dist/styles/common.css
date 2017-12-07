@@ -33,3 +33,8 @@
 .formDialog .el-date-editor.el-input{
   width:100%!important;
 }
+
+.tablePager{
+  padding:20px 0px;
+  text-align: right;
+}
