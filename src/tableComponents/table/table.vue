@@ -2,10 +2,10 @@
   <div>
     <slot>
       <el-table
-        v-loading="loading"
-        :data="tableData"
+        :data="getState.tableData"
         border
         @filter-change="filterChangeFn"
+        @sort-change="sortChangeFn"
         style="width: 100%">
         <template v-for="(item, index) in getState.table" v-if="item.column==='show'">
           <template v-if="!item.render">
@@ -15,7 +15,6 @@
                 :column-key="item.key"
                 :label="item.title"
                 sortable
-                :filter-method="filterFn"
                 :filters="item.filters"
                 filter-placement="bottom-end"
                 :width="item.width">
@@ -41,8 +40,7 @@
                   <el-button
                     v-if="renderItem.tag==='button'"
                     @click.native.prevent="renderItem.fn(scope)"
-                    :type="renderItem.type"
-                    size="small">
+                    :type="renderItem.type">
                     {{renderItem.text}}
                   </el-button>
                   <a
@@ -117,6 +115,7 @@
       'getState.requestUrl': {
         handler: function (val, oldVal) {
           if (oldVal !== val) {
+            console.warn(val)
             this.getList()
           }
         },
@@ -126,14 +125,16 @@
        *  获取tableData 后处完相关数据塞进tableData，
        *  前台展示结果
        */
-      'getState.tableData': {
-        handler: function (val, oldVal) {
-          if (oldVal !== undefined) {
-            this.tableData = val
-          }
-        },
-        deep: true
-      },
+//      'getState.tableData': {
+//        handler: function (val, oldVal) {
+//          if (oldVal !== undefined) {
+//            this.tableData = val
+//            console.log(33333)
+//            console.log(val)
+//          }
+//        },
+//        deep: true
+//      },
       /**
        *  搜索筛选排序
        */
@@ -163,41 +164,68 @@
          *  条件筛选
          */
         let filterUrl = ``
-        for (let filters in _this.getState.filterBox) {
-          let filtersHtmls = ``
-          _this.getState.filterBox[filters].forEach(function (key) {
-            filtersHtmls += `${key}or`
-          })
-          filterUrl += `(${filtersHtmls.slice(0, -2)})and`
-        }
-        if (filterUrl !== '') {
-          console.log(filterUrl)
-          let initFilter = _this.getState.urlParameter.$filter
-          if (initFilter !== '') {
-            urlObj['filterUrl'] = `(${initFilter} and ${filterUrl.slice(0, -3)})`
-          } else {
-            urlObj['filterUrl'] = `(${filterUrl.slice(0, -3)})`
+        let filtersBOx = _this.getState.filterBox
+        if (Object.keys(filtersBOx).length !== 0) {
+          for (let filters in filtersBOx) {
+            let filtersHtmls = ``
+            filtersBOx[filters].forEach(function (key) {
+              filtersHtmls += `${key}or`
+            })
+            filterUrl += `(${filtersHtmls.slice(0, -2)})and`
           }
-        }
-
-        /**
-         *  url 拼接
-         */
-        let searchUrlString = ``
-        let lastUrl = ``
-        for (let key in urlObj) {
-          if (key === 'filterUrl') {
-            if (urlObj[key] !== '') {
-              lastUrl += `&$filter=${urlObj[key]}and`
+          if (filterUrl !== '') {
+            let initFilter = _this.getState.urlParameter.$filter
+            if (initFilter !== '') {
+              urlObj['filterUrl'] = `$filter=(${initFilter} and ${filterUrl.slice(0, -3)})`
+            } else {
+              urlObj['filterUrl'] = `$filter=(${filterUrl.slice(0, -3)})`
             }
           }
         }
-        url += lastUrl
-        console.log(url)
+        /**
+         *  排序条件
+         *  目前只支持单列排序
+         *  多列功能后面组建支持，功能上基本没问题
+         *
+         *  如果执行排序，则用排序，不然用初始排序
+         */
+        let sortUrl = ``
+        let sortBox = _this.getState.sortBox
+        if (Object.keys(sortBox).length !== 0) {
+          sortUrl = `$orderby=${sortBox.prop} ${sortBox.order}`
+        }
+        let initSort = _this.getState.urlParameter.$orderby
+        if (sortUrl !== '') {
+          urlObj['sortUrl'] = sortUrl
+        } else if (initSort !== '') {
+          urlObj['sortUrl'] = `$orderby=${initSort}`
+        }
+        /**
+         *  url 拼接
+         */
+        let urlValues = Object.values(urlObj)
+        urlValues.forEach(function (item, index) {
+          if (index === 0) {
+            url += `?${item}`
+          } else {
+            url += `&${item}`
+          }
+        })
+        _this.$store.dispatch(_this.options.gridKey + 'setData', {requestUrl: urlAppend(url, {r: Math.random()})})
       },
       filterChangeFn(filters) {
-        let searchBtn = this.getState.searchBtn
         this.$store.dispatch(this.options.gridKey + '_set_filterbox', filters)
+        let searchBtn = this.getState.searchBtn
+        this.$store.dispatch(this.options.gridKey + 'setData', {searchBtn: !searchBtn})
+      },
+      sortChangeFn(column, prop, order) {
+        let orderKey = column.order === 'descending' ? 'desc' : 'asc'
+        let orderObj = {
+          order: orderKey,
+          prop: column.prop
+        }
+        this.$store.dispatch(this.options.gridKey + '_set_sortbox', orderObj)
+        let searchBtn = this.getState.searchBtn
         this.$store.dispatch(this.options.gridKey + 'setData', {searchBtn: !searchBtn})
       },
       filterFn(value, row) {
@@ -222,7 +250,6 @@
       },
       //        获取表格和数据字典数据
       getList() {
-        console.log(2333)
         let tableUrl = this.getState.requestUrl
         let _this = this
         let myRequests = [Vue.prototype.$api.request(tableUrl)]

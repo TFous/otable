@@ -3,19 +3,6 @@ function createMutations(state, gridKey) {
     [gridKey + '_SET_DATA'](state, data) {
       Object.assign(state, data)
     },
-    // 下面都是老的
-    [gridKey + '_ADD_WINDOW_VISIBLE'](state, val) {
-      state.add_Window_Visible = !state.add_Window_Visible
-    },
-    [gridKey + '_DETAILS_WINDOW_VISIBLE'](state, val) {
-      state.details_Window_Visible = !state.details_Window_Visible
-    },
-    [gridKey + '_EDIT_WINDOW_DATA'](state, data) {
-      state.edit_Window_Data = data
-    },
-    [gridKey + '_DETAILS_WINDOW_DATA'](state, data) {
-      state.details_Window_Data = data
-    },
     [gridKey + '_FILTER_BOX_DATA'](state, data) {
       // reset
       if (data === null) {
@@ -29,6 +16,30 @@ function createMutations(state, gridKey) {
         }
       }
       state.filterBox = Object.assign({}, state.filterBox, data)
+    },
+    [gridKey + '_SORT_BOX_DATA'](state, data) {
+      if (data.prop === null) {
+        state.sortBox = {}
+      } else {
+        state.sortBox = data
+      }
+    },
+    /**
+     * // 下面都是老的
+     * @param state
+     * @param val
+     */
+    [gridKey + '_ADD_WINDOW_VISIBLE'](state, val) {
+      state.add_Window_Visible = !state.add_Window_Visible
+    },
+    [gridKey + '_DETAILS_WINDOW_VISIBLE'](state, val) {
+      state.details_Window_Visible = !state.details_Window_Visible
+    },
+    [gridKey + '_EDIT_WINDOW_DATA'](state, data) {
+      state.edit_Window_Data = data
+    },
+    [gridKey + '_DETAILS_WINDOW_DATA'](state, data) {
+      state.details_Window_Data = data
     },
     [gridKey + '_DEL_DATA'](state, data) {
       state.delData = data
@@ -114,7 +125,17 @@ export function registerModule(_this, state, gridKey) {
       [gridKey + 'setData']({dispatch, commit}, obj) {
         _this.$store.commit(gridKey + '_SET_DATA', obj)
       },
-      //下面都是老的，待废弃
+      [gridKey + '_set_filterbox']({dispatch, commit}, val) {
+        _this.$store.commit(gridKey + '_FILTER_BOX_DATA', val)
+      },
+      [gridKey + '_set_sortbox']({dispatch, commit}, val) {
+        _this.$store.commit(gridKey + '_SORT_BOX_DATA', val)
+      },
+      /**
+       * // 下面都是老的
+       * @param state
+       * @param val
+       */
       addNum({dispatch, commit}, val) {
         _this.$store.commit('ADD_NUM', val)
       },
@@ -132,9 +153,6 @@ export function registerModule(_this, state, gridKey) {
       },
       [gridKey + '_set_table_data']({dispatch, commit}, val) {
         _this.$store.commit(gridKey + '_TABLE_DATA', val)
-      },
-      [gridKey + '_set_filterbox']({dispatch, commit}, val) {
-        _this.$store.commit(gridKey + '_FILTER_BOX_DATA', val)
       },
       [gridKey + '_set_del_data']({dispatch, commit}, val) {
         _this.$store.commit(gridKey + '_DEL_DATA', val)
@@ -160,7 +178,7 @@ export function registerModule(_this, state, gridKey) {
 
 export const options = {
   requestUrl: '', // 最终请求的url
-  orderBox: {}, // 存储排序信息
+  sortBox: {}, // 存储排序信息  // 理论可以实现多列排序，目前组建展示效果不支持，功能保留
   filterBox: {}, // 存储筛选信息
   advancedSearchBox: {}, // 存储高级搜索信息
   adSearchBoolean: false, // 高级搜索是否开启
