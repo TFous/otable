@@ -32,10 +32,10 @@
         },
         methods: {
             handleSizeChange (val) {  // 每页显示条数变化事件
-                this.$store.dispatch(this.options.gridKey + '_set_state_data', {pager_Size: val})
+                this.$store.dispatch(this.options.gridKey + 'setData', {pager_Size: val})
             },
-            handleCurrentChange (val) {
-                this.$store.dispatch(this.options.gridKey + '_set_state_data', {pager_CurrentPage: val})
+            handleCurrentChange (val) { // 页数变化
+                this.$store.dispatch(this.options.gridKey + 'setData', {pager_CurrentPage: val})
             }
         }
     }

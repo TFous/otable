@@ -128,8 +128,6 @@
 //        handler: function (val, oldVal) {
 //          if (oldVal !== undefined) {
 //            this.tableData = val
-//            console.log(33333)
-//            console.log(val)
 //          }
 //        },
 //        deep: true
@@ -145,6 +143,41 @@
         },
         deep: true
       },
+      /**
+       *   刷新按钮
+       */
+      'getState.refresh': {
+        handler: function (val, oldVal) {
+          if (oldVal !== undefined) {
+            this.refreshFn()
+          }
+        },
+        deep: true
+      },
+      /**
+       *  每页展示数量变化
+       */
+      'getState.pager_Size': {
+        handler: function (val, oldVal) {
+          if (oldVal !== undefined) {
+            this.$store.dispatch(this.options.gridKey + 'setData', {pager_CurrentPage: 1})
+            this.getList(val)
+          }
+        },
+        deep: true
+      },
+      /**
+       *  页数变化
+       */
+      'getState.pager_CurrentPage': {
+        handler: function (val, oldVal) {
+          this.$store.dispatch(this.options.gridKey + 'setData', {pager_CurrentPage: val})
+          if (oldVal !== undefined ) {
+            this.getList()
+          }
+        },
+        deep: true
+      }
     },
     computed: {
       getState() {
@@ -161,6 +194,7 @@
         let urlObj = {}
         /**
          *  条件筛选
+         *  filter 理论上必须放在第一个，其他条件随意
          */
         let filterUrl = ``
         let filtersBOx = _this.getState.filterBox
@@ -200,6 +234,16 @@
           urlObj['sortUrl'] = `$orderby=${initSort}`
         }
         /**
+         *  $expand 扩展
+         *  目前只支持初加载 vuex => options => urlParameter  => $expand
+         *
+         */
+        let initExpand = _this.getState.urlParameter.$expand
+        let expandUrl = initExpand !== '' ? initExpand : ''
+        if (expandUrl !== '') {
+          urlObj['expandUrl'] = `$expand=${expandUrl}`
+        }
+        /**
          *  url 拼接
          */
         let urlValues = Object.values(urlObj)
@@ -228,7 +272,6 @@
         this.$store.dispatch(this.options.gridKey + 'setData', {searchBtn: !searchBtn})
       },
       filterFn(value, row) {
-//        console.log(value, row)
       },
 //     初始化url,获取数据字典数据
       loadingFn() {
@@ -249,19 +292,54 @@
         this.$store.dispatch(this.options.gridKey + 'setData', {requestUrl: url})
       },
       //        获取表格和数据字典数据
-      getList() {
-        let tableUrl = this.getState.requestUrl
-        let requestUrl = Vue.prototype.$api.request(tableUrl)
-        console.log(requestUrl)
+      getList(size) {
+        let $requestUrl = clone(this.getState.requestUrl)
+        let $countUrl
+        let splitUrl = $requestUrl.split('?$')
+        if (splitUrl.length === 2) {
+          $countUrl = `${splitUrl[0]}/$count?$${splitUrl[1]}`
+        } else {
+          console.error('获取总条数count URL失败！')
+        }
+        /**
+         *  requestCountHeader 获取总条数，不含分页信息
+         *
+         */
+        let requestCountHeader = Vue.prototype.$api.request($countUrl)
         let _this = this
-        let myRequests = []
-        Promise.all(myRequests.map(myRequest =>
-          fetch(myRequest).then(resp => {
+        fetch(requestCountHeader).then(resp => {
+          return resp.text()
+        }).then(count => {
+          if (count === 0) {
+            _this.ready = true
+            _this.$store.dispatch(_this.options.gridKey + 'setData', {tableData: []})
+            _this.$store.dispatch(_this.options.gridKey + 'setData', {pager_Total: 0})
+            _this.$store.dispatch(_this.options.gridKey + 'setData', {pager_CurrentPage: 1})
+            _this.$message('无符合要求数据')
+            return false
+          }
+          /**
+           *  当获取总条数不位0的时候，在拉取数据
+           */
+          _this.$store.dispatch(_this.options.gridKey + 'setData', {pager_Total: Number(count)})
+
+          let pageSize, pageSkip
+          if (size) {
+            pageSize = size
+            pageSkip = 0
+          } else {
+            let pagerCurrentPage = _this.getState.pager_CurrentPage
+            pageSize = _this.getState.pager_Size
+            pageSkip = _this.getState.pager_Size * (pagerCurrentPage - 1)
+          }
+          // requestDataHeader 获取分页 的data
+          $requestUrl+=`&$top=${pageSize}&$skip=${pageSkip}`
+          let requestDataHeader = Vue.prototype.$api.request($requestUrl)
+          fetch(requestDataHeader).then(resp => {
             return resp.json()
+          }).then(data => {
+            _this.$store.dispatch(_this.options.gridKey + 'setData', {initTableData: data.value})
           })
-        )).then(datas => {
-          console.log(datas)
-//            _this.$store.dispatch(_this.options.gridKey + 'setData', {initTableData: data.value})
         })
       },
 //      注册模块
@@ -308,7 +386,7 @@
         )).then(datas => {
           datas.forEach(function (data, index) {
 //              注册数据字典
-            let gridKey = _this.urlsKey[index - 1]
+            let gridKey = _this.urlsKey[index]
             let initState = {
               data: data
             }
