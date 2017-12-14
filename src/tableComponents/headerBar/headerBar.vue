@@ -116,7 +116,7 @@
             <slot name="seniorSearch"></slot>
             <div style="text-align: right">
               <el-button type="primary" @click="seniorSearchFn">搜索</el-button>
-              <el-tooltip :content="'搜索方式: ' + seniorSearchTip" placement="top">
+              <el-tooltip :content="'当前搜索方式: ' + seniorSearchTip" placement="top">
                 <el-switch
                   @change="seniorSearchTypeToggleFn"
                   v-model="seniorSearchType">
@@ -140,7 +140,7 @@
     data() {
       return {
         seniorSearchType: false, // 高级搜索方式
-        seniorSearchTip: '所填条件只要一条满足，就展示', // 高级搜索提示 当seniorSearchType ：false 的文字
+        seniorSearchTip: '列表展示满足任意一个搜索条件的数据', // 高级搜索提示 当seniorSearchType ：false 的文字
         dropList: [],
         checkList: JSON.parse(localStorage.getItem('newColumn')) || [],
 //        checkList: [],
@@ -198,14 +198,17 @@
         default: true
       }
     },
+    beforeMount() {
+    },
     mounted: function () {
+      this.$xvuex.registerModule(this, this.options, this.options.gridKey)
+
 //      this.checkList = JSON.parse(localStorage.getItem('newColumn')) || []
 //      设置 checkList
       let dropList = []
       this.getState.table.forEach(function (item) {
         dropList.push(item.title)
       })
-//      console.log(dropList)
       this.dropList = dropList
 
       try {
@@ -264,9 +267,9 @@
     methods: {
       seniorSearchTypeToggleFn(val) {
         if (val === true) {
-          this.seniorSearchTip = '所填条件都满足才展示'
+          this.seniorSearchTip = '列表展示满足所有条件的数据'
         } else {
-          this.seniorSearchTip = '所填条件只要一条满足，就展示'
+          this.seniorSearchTip = '列表展示满足任意一个搜索条件的数据'
         }
         this.$store.dispatch(this.options.gridKey + 'setData', {seniorSearchType: val})
       },
@@ -276,8 +279,6 @@
         }
       },
       setNumber(key, title) {
-        console.log(333)
-        console.log(this.formItem[key])
         if (this.formItem[key] === '') {
           delete this.formItem[key]
           return

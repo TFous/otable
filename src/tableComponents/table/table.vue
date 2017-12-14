@@ -1,9 +1,10 @@
 <template>
-  <div>
+  <div class="otable">
     <slot>
       <el-table
         :data="getState.tableData"
         border
+        :stripe="false"
         @filter-change="filterChangeFn"
         @sort-change="sortChangeFn"
         style="width: 100%">
