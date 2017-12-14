@@ -52,69 +52,80 @@
             </el-dropdown-menu>
           </el-dropdown>
         </el-col>
-        <el-col :span="6">
-          <el-row class="searchWrap">
-            <el-col :span="11">
-              <el-select
-                class="searchSelect"
-                v-model="paramsSelect"
-                multiple
-                filterable
-                allow-create
-                placeholder="请选择关键词">
-                <el-option
-                  v-for="(item, key, val) in paramsOption"
-                  :key="key"
-                  :label="item"
-                  :value="key">
-                </el-option>
+        <el-col :span="8">
+          <div class="searchWrap">
+            <el-input :clearable="true" placeholder="请输入内容" :disabled="isSeniorSearch" @keyup.enter.native="searchFn"
+                      v-model="paramsValue"
+                      class="input-with-select">
+              <el-select v-model="paramsSelect" slot="prepend" placeholder="请选择" style="width:130px;">
+                <el-option v-for="(item, key) in paramsOption"
+                           :key="item.value"
+                           :label="item.label"
+                           :value="item.value"></el-option>
               </el-select>
-            </el-col>
-            <el-col :span="13">
-              <el-input
-                class="searchInput"
-                icon="search"
-                @keyup.enter.native="searchFn"
-                v-model="paramsValue"
-                placeholder="请输入..."
-                :on-icon-click="searchFn">
-              </el-input>
-            </el-col>
-          </el-row>
-        </el-col>
-        <el-col :span="8" v-if="options.timeSearch && timeSearchShow">
-          <el-row>
-            <el-col :span="6">
-              <div style="margin-right: 4px;">
-                <el-select v-model="timeSelectKey" placeholder="请选择">
-                  <el-option
-                    v-for="item in SelectOpints"
-                    :value="item.value"
-                    :label="item.label"
-                    :key="item.value"
-                  ></el-option>
-                </el-select>
-              </div>
-            </el-col>
-            <el-col :span="10">
-              <el-date-picker
-                class="dataSelect"
-                :editable="false"
-                v-model="searchTime"
-                type="daterange"
-                @change="searchTimeChange"
-                placeholder="选择日期"
-              >
-              </el-date-picker>
-            </el-col>
-            <el-col :span="3">
-              <el-button @click="searchFn" style="margin-left: 4px;">
-                <Icon type="plus"></Icon>
-              </el-button>
-            </el-col>
-          </el-row>
+              <el-button :disabled="isSeniorSearch" slot="append" @click="searchFn"
+                         icon="el-icon-search"></el-button>
+            </el-input>
+          </div>
+          <div class="seniorSearchBtn">
+            <el-switch
+              v-model="isSeniorSearch"
+              @change="swichChangeFn"
+              :active-text="seniorText">
+            </el-switch>
+          </div>
+          <!--<el-button type="primary" icon="el-icon-search">高级</el-button>-->
         </el-col>
       </el-row>
+      <!--高级搜索内容-->
+      <div class="seniorWrap" v-show="isSeniorSearch">
+        <el-row :gutter="20">
+          <el-form ref="form" :model="formItem" label-width="120px">
+            <template v-for="tableItem in optTables">
+              <template v-for="seniorItem in seniorSearchOptions">
+                <template v-if="tableItem.key===seniorItem.key">
+                  <el-col :span="6">
+                    <template v-if="seniorItem.type==='date'">
+                      <el-form-item :label="seniorItem.title">
+                        <el-date-picker
+                          v-model="formItem[seniorItem.key]"
+                          type="daterange"
+                          range-separator="至"
+                          start-placeholder="开始日期"
+                          end-placeholder="结束日期">
+                        </el-date-picker>
+                      </el-form-item>
+                    </template>
+                    <template v-else-if="seniorItem.type==='number'">
+                      <el-form-item :label="seniorItem.title">
+                        <el-input v-model="formItem[seniorItem.key]"
+                                  :clearable="true"
+                                  @change="setNumber(seniorItem.key,seniorItem.title)"></el-input>
+                      </el-form-item>
+                    </template>
+                    <template v-else>
+                      <el-form-item :label="seniorItem.title">
+                        <el-input @change="isEmptyKey(seniorItem.key)" v-model="formItem[seniorItem.key]"
+                                  :clearable="true"></el-input>
+                      </el-form-item>
+                    </template>
+                  </el-col>
+                </template>
+              </template>
+            </template>
+            <slot name="seniorSearch"></slot>
+            <div style="text-align: right">
+              <el-button type="primary" @click="seniorSearchFn">搜索</el-button>
+              <el-tooltip :content="'搜索方式: ' + seniorSearchTip" placement="top">
+                <el-switch
+                  @change="seniorSearchTypeToggleFn"
+                  v-model="seniorSearchType">
+                </el-switch>
+              </el-tooltip>
+            </div>
+          </el-form>
+        </el-row>
+      </div>
     </div>
   </div>
 </template>
@@ -128,6 +139,8 @@
   export default {
     data() {
       return {
+        seniorSearchType: false, // 高级搜索方式
+        seniorSearchTip: '所填条件只要一条满足，就展示', // 高级搜索提示 当seniorSearchType ：false 的文字
         dropList: [],
         checkList: JSON.parse(localStorage.getItem('newColumn')) || [],
 //        checkList: [],
@@ -142,15 +155,17 @@
           label: 'JavaScript'
         }],
         value10: [],
-        arr: [],
+        optTables: [],
         advancedSearchBox: {}, // 高级搜索选项
         advancedSearch: false, // 高级搜索是否显示
+        isSeniorSearch: false, // 高级搜索是否显示
+        seniorSearchOptions: [], // 高级搜索选项
         formItem: {}, // 存储高级搜索的值
         timeSearchShow: true,
         SelectOpints: [],
         timeSelectKey: '',
         searchTime: '',
-        paramsOption: {},
+        paramsOption: [],
         paramsValue: '',
         paramsSelect: 'searchAll' // 默认搜索
       }
@@ -187,7 +202,7 @@
 //      this.checkList = JSON.parse(localStorage.getItem('newColumn')) || []
 //      设置 checkList
       let dropList = []
-      this.getOptions.table.forEach(function (item) {
+      this.getState.table.forEach(function (item) {
         dropList.push(item.title)
       })
 //      console.log(dropList)
@@ -198,10 +213,11 @@
         common.bindFn(this, arrFn)
       } catch (e) {
       }
-      this.$store.dispatch(this.getOptions.gridKey + '_set_state_data', {searchVal: ''})
+      this.$store.dispatch(this.getState.gridKey + 'setData', {searchVal: ''})
       this.paramsOption = this.setOptions(this.options.table)
-      this.advancedSearchBox = this.setAdSearchOptions(this.options.table)
-      this.arr = clone(this.options.table)
+      // 设置高级搜索键值
+      this.setSeniorSearchOptions()
+      this.optTables = clone(this.getState.table)
       this.SelectOpints = this.setSelectOpints(this.options.table)
       /**
        *   时间搜索是否显示：如果没有date属性则自动隐藏
@@ -222,12 +238,21 @@
       }
     },
     computed: {
-      getOptions() {
+      getState() {
         return this.$store.state[this.options.gridKey]
+      },
+      seniorText() {
+        let text
+        if (this.isSeniorSearch === false) {
+          text = '高级搜索关'
+        } else {
+          text = '高级搜索开'
+        }
+        return text
       }
     },
     watch: {
-      'getOptions.adSearchBoolean': {
+      'getState.adSearchBoolean': {
         handler: function (val, oldVal) {
           if (oldVal !== undefined) {
             this.advancedSearch = val
@@ -237,10 +262,66 @@
       }
     },
     methods: {
+      seniorSearchTypeToggleFn(val) {
+        if (val === true) {
+          this.seniorSearchTip = '所填条件都满足才展示'
+        } else {
+          this.seniorSearchTip = '所填条件只要一条满足，就展示'
+        }
+        this.$store.dispatch(this.options.gridKey + 'setData', {seniorSearchType: val})
+      },
+      isEmptyKey(key) {
+        if (this.formItem[key] === '') {
+          delete this.formItem[key]
+        }
+      },
+      setNumber(key, title) {
+        console.log(333)
+        console.log(this.formItem[key])
+        if (this.formItem[key] === '') {
+          delete this.formItem[key]
+          return
+        }
+        let val = Number(this.formItem[key])
+        let isNumber = !Number.isNaN(val)
+        if (isNumber === true) {
+          this.formItem[key] = val
+        } else {
+          this.formItem[key] = ''
+          this.$message({
+            showClose: true,
+            message: `${title} -- 必须为填写数字！`,
+            type: 'warning'
+          })
+        }
+      },
+//     高级搜索
+      seniorSearchFn() {
+        for (let item in this.formItem) {
+          this.formItem[item] = common.trim(this.formItem[item])
+        }  // 去除空格
+        let seniorSearchBox = clone(this.formItem)
+        this.$store.dispatch(this.options.gridKey + 'setData', {seniorSearchBox: seniorSearchBox})
+        this.$store.dispatch(this.options.gridKey + 'setData', {searchBtn: !this.getState.searchBtn})
+        this.$store.dispatch(this.options.gridKey + 'setData', {isSeniorSearch: this.isSeniorSearch})
+      },
+//      设置高级搜索键值
+      setSeniorSearchOptions() {
+        let tableOptions = this.getState.table
+        let _this = this
+        tableOptions.forEach(function (item) {
+          if (item.search_hide !== 1 && item.type !== 'select') {
+            _this.seniorSearchOptions.push(item)
+          }
+        })
+      },
+      swichChangeFn(val) {
+        console.log(val)
+      },
       column() {
         let newColumn = this.checkList
 //        let newTable = []
-//        let newOpt = clone(_this.getOptions)
+//        let newOpt = clone(_this.getState)
 //        newOpt.table.forEach(function (item) {
 //          newColumn.forEach(function (column) {
 //            if (column === item.title) {
@@ -252,17 +333,10 @@
 //        localStorage.setItem('newOpt', JSON.stringify(newOpt))
         localStorage.setItem('newColumn', JSON.stringify(newColumn))
 //        location.reload()
-          // DOM updated
+        // DOM updated
 //          _this.$store.dispatch(_this.options.gridKey + '_set_state_data', {table: newTable})
 //        this.$store.dispatch(this.options.gridKey + '_set_refresh')
         this.$router.replace(`/app?r=${Math.random()}`)
-      },
-      advancedSearchBtn() {
-        for (let item in this.formItem) {
-          this.formItem[item] = common.trim(this.formItem[item])
-        }  // 去除空格
-        this.$store.dispatch(this.options.gridKey + '_set_state_data', {advancedSearchBox: this.formItem})
-        this.$store.dispatch(this.getOptions.gridKey + '_set_state_data', {searchBtn: !this.getOptions.searchBtn})
       },
       switchChange(val) {
         this.$store.dispatch(this.options.gridKey + '_set_state_data', {adSearchBoolean: val})
@@ -277,7 +351,7 @@
       },
       batchDel() { // 批量删除
         let _self = this
-        let delObjs = _self.getOptions.delData
+        let delObjs = _self.getState.delData
         let $length = delObjs.length
         if ($length === 0) {
           this.$Message.warning('请先选中需要删除的项目。')
@@ -324,37 +398,33 @@
         })
         return newArr
       },
-      searchTimeChange(val) {
-        let startTime = val[0]
-        let endTime = val[1]
-        console.log(val)
-        this.$store.dispatch(this.getOptions.gridKey + '_set_state_data', {endTime: endTime})
-        this.$store.dispatch(this.getOptions.gridKey + '_set_state_data', {startTime: startTime})
-      },
-      endTimeFn(val) {
-      },
       searchFn() {
         this.paramsValue = common.trim(this.paramsValue)
-        this.$store.dispatch(this.getOptions.gridKey + '_set_state_data', {timeSelectKey: this.timeSelectKey})
-        this.$store.dispatch(this.getOptions.gridKey + '_set_state_data', {searchBtn: !this.getOptions.searchBtn})
-        this.$store.dispatch(this.getOptions.gridKey + '_set_state_data', {searchVal: this.paramsValue})
-        this.$store.dispatch(this.getOptions.gridKey + '_set_state_data', {searchKeys: this.paramsSelect})
+        this.$store.dispatch(this.getState.gridKey + 'setData', {searchBtn: !this.getState.searchBtn})
+        this.$store.dispatch(this.getState.gridKey + 'setData', {searchVal: this.paramsValue})
+        this.$store.dispatch(this.getState.gridKey + 'setData', {searchKeys: this.paramsSelect})
       },
       setOptions(data) {
-        let o = {}
-//        o['searchAll'] = '全部'
+        let paramsOption = [{
+          label: '全部',
+          value: 'searchAll'
+        }]
         for (let item of data) {
           if (item.search_hide !== 1 && item.type !== 'select' && item.type !== 'date') {
-            o[item.key] = item.title
+            let o = {}
+            o.label = item.title
+            o.value = item.key
+            paramsOption.push(o)
           }
         }
-        return o
+        return paramsOption
       },
       setAdSearchOptions(data) {
         let o = {}
         for (let item of data) {
           if (item.search_hide !== 1 && item.type !== 'select') {
-            o[item.key] = item.title
+            o.label = item.title
+            o.value = item.key
           }
         }
         return o
@@ -363,58 +433,22 @@
   }
 </script>
 <style>
-  .searchWrap {
-    border: 1px solid #bfcbd9;
-    border-radius: 4px;
-    background: #fff;
-  }
-
-  .searchWrap input {
-    border: 0px none !important;
-    border-radius: 0px !important;
-    background: transparent;
-  }
-
-  .searchWrap .el-select__tags {
-    height: 30px;
-    overflow: hidden;
-    max-width: none !important;
-  }
-
-  .searchWrap:hover {
-    border-color: #8391a5;
-  }
-
-  /*.searchSelect input{*/
-  /*border: 0px none!important;*/
-  /*border-radius: 0px!important;*/
-  /*}*/
-  /*.searchInput input{*/
-  /*border: 0px none!important;*/
-  /*border-radius: 0px!important;*/
-  /*}*/
-  .advancedSearchFoot {
-    padding: 0px 63px 15px 63px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid #dddee1;
-  }
-
-  .pagerHead3 {
-    border-left: 6px solid red;
-    padding-left: 12px;
-    font-size: 18px;
-  }
-
   .pagerHead {
-    padding: 12px 0px;
+    overflow: hidden;
+    padding: 0px 0px 12px 0px;
   }
 
-  .advancedSearch {
-    margin-top: 20px;
-  }
-
-  .cellCol {
+  .seniorSearchBtn {
     display: inline-block;
-    width: 24%;
+  }
+
+  .searchWrap {
+    /*padding:20px 0px;*/
+    margin-right: 20px;
+    display: inline-block;
+  }
+
+  .searchWrap .el-input__inner {
+    text-align: center;
   }
 </style>

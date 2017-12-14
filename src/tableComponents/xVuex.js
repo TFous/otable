@@ -180,8 +180,10 @@ export const options = {
   requestUrl: '', // 最终请求的url
   sortBox: {}, // 存储排序信息  // 理论可以实现多列排序，目前组建展示效果不支持，功能保留
   filterBox: {}, // 存储筛选信息
-  advancedSearchBox: {}, // 存储高级搜索信息
-  adSearchBoolean: false, // 高级搜索是否开启
+  // advancedSearchBox: {}, // 存储高级搜索信息
+  seniorSearchBox: {}, // 存储高级搜索信息
+  seniorSearchType: false, // 高级搜索方式是and 还是 or
+  isSeniorSearch: false, // 是否为高级搜索
   timeSearch: true,  // 是否显示时间搜索
   refresh: false,  // 提供一个变量watch 是否需要刷新页面
   delData: [],  // 存储批量删除的对象

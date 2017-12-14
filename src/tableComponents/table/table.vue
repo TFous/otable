@@ -64,7 +64,7 @@
   let isFirst = true
   import o from 'o.js'
   //  import clone from 'clone'
-  import * as fn from '../common'
+  import * as common from '../common'
   import urlAppend from 'url-append'
   import clone from 'clone'
 
@@ -172,7 +172,7 @@
       'getState.pager_CurrentPage': {
         handler: function (val, oldVal) {
           this.$store.dispatch(this.options.gridKey + 'setData', {pager_CurrentPage: val})
-          if (oldVal !== undefined ) {
+          if (oldVal !== undefined) {
             this.getList()
           }
         },
@@ -188,13 +188,18 @@
 
     },
     methods: {
+      /**
+       *  基本思路：创建一个urlObj,每个属性是一个关键词的集合，条件关键词无非就是filter/order等，
+       *  存放之前先判断对象中是否有这个关键词，如果没有直接塞进去，有则在已存在那里继续拼接
+       *  定义 filterUrl，sortUrl，expandUrl
+       */
       searchFn() {
         let _this = this
         let url = this.getState.url
         let urlObj = {}
         /**
          *  条件筛选
-         *  filter 理论上必须放在第一个，其他条件随意
+         *
          */
         let filterUrl = ``
         let filtersBOx = _this.getState.filterBox
@@ -209,11 +214,24 @@
           if (filterUrl !== '') {
             let initFilter = _this.getState.urlParameter.$filter
             if (initFilter !== '') {
-              urlObj['filterUrl'] = `$filter=(${initFilter} and ${filterUrl.slice(0, -3)})`
+              let url = `$filter=(${initFilter} and ${filterUrl.slice(0, -3)})`
+              urlObj['filterUrl'] = _this.isHasKey(urlObj['filterUrl'], url, '$filter=')
             } else {
-              urlObj['filterUrl'] = `$filter=(${filterUrl.slice(0, -3)})`
+//              urlObj['filterUrl'] = `$filter=(${filterUrl.slice(0, -3)})`
+              let url = `$filter=(${filterUrl.slice(0, -3)})`
+              urlObj['filterUrl'] = _this.isHasKey(urlObj['filterUrl'], url, '$filter=')
             }
           }
+        }
+        /**
+         *  关键词搜索
+         *
+         */
+        let isSeniorSearch = _this.getState.isSeniorSearch
+        if (isSeniorSearch === false) {
+          _this.keyWordSearch(urlObj)
+        } else {
+          _this.seniorSearchFn(urlObj)
         }
         /**
          *  排序条件
@@ -255,6 +273,94 @@
           }
         })
         _this.$store.dispatch(_this.options.gridKey + 'setData', {requestUrl: urlAppend(url, {r: Math.random()})})
+      },
+//     高级搜索
+      seniorSearchFn(urlObj) {
+        let _this = this
+        let seniorObj = _this.getState.seniorSearchBox
+        let seniorSearchType = this.getState.seniorSearchType
+        let typeKey, sliceLength
+        if (seniorSearchType === false) {
+          typeKey = 'or'
+          sliceLength = -2
+        } else {
+          typeKey = 'and'
+          sliceLength = -3
+        }
+        let valUrl = ``
+        for (let item in seniorObj) {
+          if (typeof seniorObj[item] === 'number') {
+            valUrl += `(${item} eq ${Number(seniorObj[item])})${typeKey}`
+          } else if (typeof seniorObj[item] === 'string') {
+            valUrl += `(contains(${item},'${seniorObj[item]}'))${typeKey}`
+          } else if (seniorObj[item] instanceof Array === true) {
+            let startTime = common.setStarTime(seniorObj[item][0])
+            let endTime = common.endTime(seniorObj[item][1])
+            valUrl += `(${item} ge ${startTime} and ${item} le ${endTime})${typeKey}`
+          }
+        }
+        if (valUrl !== '') {
+          let url = `$filter=(${valUrl.slice(0, sliceLength)})`
+          urlObj['filterUrl'] = _this.isHasKey(urlObj['filterUrl'], url, '$filter=')
+//          urlObj['keyWorkUrl'] = `$filter=(${valUrl.slice(0, sliceLength)})`
+        }
+      },
+//      关键词搜索
+      keyWordSearch(urlObj) {
+        let _this = this
+        let searchKey = _this.getState.searchKeys
+        let searchVal = _this.getState.searchVal
+        if (searchVal !== '') {  // 如果搜索有值
+          let valUrl = ``
+          if (searchKey === 'searchAll') {
+            for (let item of _this.getState.table) {
+              if ((item.type === '' || item.type === 'textarea' || item.type === 'string') && item.search_hide !== 1) {
+                valUrl += `(contains(${item.key},'${searchVal}'))or`
+              } else if (item.type === 'number' && Number.isNaN(Number(searchVal)) !== true) {
+                valUrl += `(${item.key} eq ${Number(searchVal)})or`
+              }
+            }
+          } else {
+            for (let item of _this.getState.table) {
+              if (item.key === searchKey) {
+                if (item.type === '' || item.type === 'textarea' || item.type === 'string') {
+                  valUrl += `(contains(${item.key},'${searchVal}'))or`
+                } else if (item.type === 'number') {
+                  if (Number.isNaN(Number(searchVal)) !== true) {
+                    valUrl += `(${item.key} eq ${Number(searchVal)})or`
+                  } else {
+                    _this.$message({
+                      showClose: true,
+                      message: '参数必须为数字',
+                      type: 'warning'
+                    })
+                    return false
+                  }
+                }
+              }
+            }
+          }
+          if (valUrl !== '') {
+            let url = `$filter=(${valUrl.slice(0, -2)})`
+            urlObj['filterUrl'] = _this.isHasKey(urlObj['filterUrl'], url, '$filter=')
+//            urlObj['keyWorkUrl'] = `$filter=(${valUrl.slice(0, -2)})`
+          }
+        }
+      },
+      /**
+       * 字符串中中是否含有置顶字段
+       * @param oldString 需要检测的string
+       * @param newString 需要新加的sting
+       * @param key
+       */
+      isHasKey(oldString, newString, key) {
+        let string
+        if (oldString === undefined) {
+          string = newString
+        } else {
+          string = `${oldString} and ${newString.split(key)[1]}`
+        }
+        return string
       },
       filterChangeFn(filters) {
         this.$store.dispatch(this.options.gridKey + '_set_filterbox', filters)
@@ -308,9 +414,11 @@
         let requestCountHeader = Vue.prototype.$api.request($countUrl)
         let _this = this
         fetch(requestCountHeader).then(resp => {
+          console.log(resp)
           return resp.text()
         }).then(count => {
-          if (count === 0) {
+          console.log('count:' + count)
+          if (Number(count) === 0) {
             _this.ready = true
             _this.$store.dispatch(_this.options.gridKey + 'setData', {tableData: []})
             _this.$store.dispatch(_this.options.gridKey + 'setData', {pager_Total: 0})
@@ -333,7 +441,7 @@
             pageSkip = _this.getState.pager_Size * (pagerCurrentPage - 1)
           }
           // requestDataHeader 获取分页 的data
-          $requestUrl+=`&$top=${pageSize}&$skip=${pageSkip}`
+          $requestUrl += `&$top=${pageSize}&$skip=${pageSkip}`
           let requestDataHeader = Vue.prototype.$api.request($requestUrl)
           fetch(requestDataHeader).then(resp => {
             return resp.json()
