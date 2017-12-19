@@ -79,6 +79,7 @@
                     v-model="dataMsg[item.key]"
                     filterable
                     remote
+                    :clearable="true"
                     @change="item.remoteMethodChange"
                     reserve-keyword
                     placeholder="请输入关键词"
@@ -117,7 +118,6 @@
   </div>
 </template>
 <script>
-  import o from 'o.js'
   import * as common from '../common.js'
   import * as xVuex from '../xVuex.js'
   import Vue from 'vue'

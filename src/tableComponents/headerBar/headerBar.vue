@@ -70,7 +70,6 @@
           <div class="seniorSearchBtn">
             <el-switch
               v-model="isSeniorSearch"
-              @change="swichChangeFn"
               :active-text="seniorText">
             </el-switch>
           </div>
@@ -80,47 +79,39 @@
       <!--高级搜索内容-->
       <div class="seniorWrap" v-show="isSeniorSearch">
         <el-row :gutter="20">
-          <el-form ref="form" :model="formItem" label-width="120px">
+          <el-form ref="form" :model="formItem" label-width="130px">
             <template v-for="tableItem in optTables">
               <template v-for="seniorItem in seniorSearchOptions">
-                <template v-if="tableItem.key===seniorItem.key">
-                  <el-col :span="6">
-                    <template v-if="seniorItem.type==='date'">
-                      <el-form-item :label="seniorItem.title">
-                        <el-date-picker
-                          v-model="formItem[seniorItem.key]"
-                          type="daterange"
-                          range-separator="至"
-                          start-placeholder="开始日期"
-                          end-placeholder="结束日期">
-                        </el-date-picker>
-                      </el-form-item>
-                    </template>
-                    <template v-else-if="seniorItem.type==='number'">
-                      <el-form-item :label="seniorItem.title">
-                        <el-input v-model="formItem[seniorItem.key]"
-                                  :clearable="true"
-                                  @change="setNumber(seniorItem.key,seniorItem.title)"></el-input>
-                      </el-form-item>
-                    </template>
-                    <template v-else>
-                      <el-form-item :label="seniorItem.title">
-                        <el-input @change="isEmptyKey(seniorItem.key)" v-model="formItem[seniorItem.key]"
-                                  :clearable="true"></el-input>
-                      </el-form-item>
-                    </template>
-                  </el-col>
-                </template>
+                <el-col :span="6" v-if="tableItem.key===seniorItem.key">
+                  <el-form-item :label="seniorItem.title" v-if="seniorItem.type==='date'">
+                    <el-date-picker
+                      v-model="formItem[seniorItem.key]"
+                      type="daterange"
+                      range-separator="至"
+                      start-placeholder="开始日期"
+                      end-placeholder="结束日期">
+                    </el-date-picker>
+                  </el-form-item>
+                  <el-form-item :label="seniorItem.title" v-else-if="seniorItem.type==='number'">
+                    <el-input v-model="formItem[seniorItem.key]"
+                              :clearable="true"
+                              @change="setNumber(seniorItem.key,seniorItem.title)"></el-input>
+                  </el-form-item>
+                  <el-form-item :label="seniorItem.title" v-else>
+                    <el-input @change="isEmptyKey(seniorItem.key)" v-model="formItem[seniorItem.key]"
+                              :clearable="true"></el-input>
+                  </el-form-item>
+                </el-col>
               </template>
             </template>
             <slot name="seniorSearch"></slot>
             <div style="text-align: right">
               <el-button type="primary" @click="seniorSearchFn">搜索</el-button>
               <!--<el-tooltip :content="'当前搜索方式: ' + seniorSearchTip" placement="top">-->
-                <!--<el-switch-->
-                  <!--@change="seniorSearchTypeToggleFn"-->
-                  <!--v-model="seniorSearchType">-->
-                <!--</el-switch>-->
+              <!--<el-switch-->
+              <!--@change="seniorSearchTypeToggleFn"-->
+              <!--v-model="seniorSearchType">-->
+              <!--</el-switch>-->
               <!--</el-tooltip>-->
             </div>
           </el-form>
@@ -130,7 +121,6 @@
   </div>
 </template>
 <script>
-  import o from 'o.js'
   import Vue from 'vue'
   import urlAppend from 'url-append'
   import clone from 'clone'
@@ -143,25 +133,12 @@
         seniorSearchTip: '列表展示满足任意一个搜索条件的数据', // 高级搜索提示 当seniorSearchType ：false 的文字
         dropList: [],
         checkList: JSON.parse(localStorage.getItem('newColumn')) || [],
-//        checkList: [],
-        options5: [{
-          value: 'HTML',
-          label: 'HTML'
-        }, {
-          value: 'CSS',
-          label: 'CSS'
-        }, {
-          value: 'JavaScript',
-          label: 'JavaScript'
-        }],
-        value10: [],
         optTables: [],
         advancedSearchBox: {}, // 高级搜索选项
         advancedSearch: false, // 高级搜索是否显示
         isSeniorSearch: false, // 高级搜索是否显示
         seniorSearchOptions: [], // 高级搜索选项
         formItem: {}, // 存储高级搜索的值
-        SelectOpints: [],
         paramsOption: [],
         paramsValue: '',
         paramsSelect: 'searchAll' // 默认搜索
@@ -199,7 +176,6 @@
     },
     mounted: function () {
       this.$xvuex.registerModule(this, this.options, this.options.gridKey)
-
 //      this.checkList = JSON.parse(localStorage.getItem('newColumn')) || []
 //      设置 checkList
       let dropList = []
@@ -213,12 +189,11 @@
         common.bindFn(this, arrFn)
       } catch (e) {
       }
-      this.$store.dispatch(this.getState.gridKey + 'setData', {searchVal: ''})
+//      this.$store.dispatch(this.getState.gridKey + 'setData', {searchVal: ''})
       this.paramsOption = this.setOptions(this.options.table)
       // 设置高级搜索键值
       this.setSeniorSearchOptions()
       this.optTables = clone(this.getState.table)
-      this.SelectOpints = this.setSelectOpints(this.options.table)
       /**
        *  设置默认搜索
        */
@@ -302,8 +277,6 @@
           }
         })
       },
-      swichChangeFn(val) {
-      },
       column() {
         let newColumn = this.checkList
 //        let newTable = []
@@ -324,9 +297,6 @@
 //        this.$store.dispatch(this.options.gridKey + '_set_refresh')
         this.$router.replace(`/app?r=${Math.random()}`)
       },
-      switchChange(val) {
-        this.$store.dispatch(this.options.gridKey + '_set_state_data', {adSearchBoolean: val})
-      },
       refreshFn() {
         this.paramsValue = null
         this.$store.dispatch(this.options.gridKey + '_set_refresh')
@@ -335,53 +305,51 @@
         this.$store.dispatch(this.options.gridKey + '_add_Window_Visible')
       },
       batchDel() { // 批量删除
-        let _self = this
-        let delObjs = _self.getState.delData
+        let _this = this
+        let delObjs = _this.getState.selection
         let $length = delObjs.length
         if ($length === 0) {
-          this.$Message.warning('请先选中需要删除的项目。')
-          return
+          this.$message({
+            message: '请先选中需要删除的项目。',
+            type: 'warning'
+          })
+          return false
         }
-        let nowNumber = 0
-        _self.$Modal.confirm({
-          title: '批量删除确认',
-          content: '此操作将删除选中项, 是否继续?',
-          onOk: function () {
-            let url = _self.options.api.split('?$filter')[0]
-            delObjs.forEach(function (Item) {
-              o(urlAppend(url, {r: Math.random()})).find(Item.Id).remove().save().then(function (data) {
-                nowNumber += 1
-                if (nowNumber === $length) {
-                  _self.$Message.info('删除成功')
-                  _self.$store.dispatch(_self.options.gridKey + '_set_refresh')
-                }
-              })
+        this.$confirm('此操作将删除选中项, 是否继续?', '批量删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          let myRequests = []
+          delObjs.forEach(function (item) {
+            let url = `${_this.getState.delUrl}(${item.Id})`
+            myRequests.push(Vue.prototype.$api.request(url, {
+              method: 'DELETE'
+            }))
+          })
+          Promise.all(myRequests.map(myRequest =>
+            fetch(myRequest).then(resp => {
+              return resp.json()
             })
+          )).then(datas => {
+            console.log(datas)
+            _this.$message({
+              type: 'success',
+              message: '删除成功!'
+            })
+            _this.$store.dispatch(_this.options.gridKey + '_set_refresh')
             //            删除最后一页 bug
-            let states = _self.$store.state[_self.options.gridKey]
-            let pagerCurrentPage = states.pager_CurrentPage
-            let pageSize = states.pager_Size
-            let pagerTotal = states.pager_Total
-//            console.log(pager_Total % pageSize + '---------' + $length)
+            let pagerCurrentPage = _this.getState.pager_CurrentPage
+            let pageSize = _this.getState.pager_Size
+            let pagerTotal = _this.getState.pager_Total
             if (pagerCurrentPage > 1 && pagerTotal % pageSize === $length) {
-              _self.$store.dispatch(_self.options.gridKey + '_set_state_data', {pager_CurrentPage: pagerCurrentPage - 1})
+              _this.$store.dispatch(_this.getState.gridKey + 'setData', {pager_CurrentPage: pagerCurrentPage - 1})
             }
-            _self.$store.dispatch(_self.options.gridKey + '_set_state_data', {delData: []})
-          }
+            _this.$store.dispatch(_this.getState.gridKey + 'setData', {selection: []})
+          })
+        }).catch(() => {
+
         })
-      },
-      setSelectOpints(data) {
-        let arr = data
-        let newArr = []
-        arr.filter(function (e) {
-          let o = {}
-          if (e.type === 'date') {
-            o['value'] = e.key
-            o['label'] = e.title
-            newArr.push(o)
-          }
-        })
-        return newArr
       },
       searchFn() {
         this.paramsValue = common.trim(this.paramsValue)
@@ -389,6 +357,11 @@
         this.$store.dispatch(this.getState.gridKey + 'setData', {searchVal: this.paramsValue})
         this.$store.dispatch(this.getState.gridKey + 'setData', {searchKeys: this.paramsSelect})
       },
+      /**
+       * 设置搜索下拉选项
+       * @param data
+       * @returns {[null]}
+       */
       setOptions(data) {
         let paramsOption = [{
           label: '全部',
@@ -403,16 +376,6 @@
           }
         }
         return paramsOption
-      },
-      setAdSearchOptions(data) {
-        let o = {}
-        for (let item of data) {
-          if (item.search_hide !== 1 && item.type !== 'select') {
-            o.label = item.title
-            o.value = item.key
-          }
-        }
-        return o
       }
     }
   }

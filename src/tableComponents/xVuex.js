@@ -131,7 +131,6 @@ export const options = {
   requestUrl: '', // 最终请求的url
   sortBox: {}, // 存储排序信息  // 理论可以实现多列排序，目前组建展示效果不支持，功能保留
   filterBox: {}, // 存储筛选信息
-  // advancedSearchBox: {}, // 存储高级搜索信息
   seniorSearchBox: {}, // 存储高级搜索信息
   seniorSearchType: true, // 高级搜索方式是and 还是 or
   otherSeniorSearchOpt:{},  // 其他手动添加的高级搜索项 对象内部值必须为数组.ps {key:[123,123]} 目前考虑的是模糊搜索，支持同事筛选多个

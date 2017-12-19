@@ -70,10 +70,7 @@
 </template>
 <script>
   import Vue from 'vue'
-
   let isFirst = true
-  import o from 'o.js'
-  //  import clone from 'clone'
   import * as common from '../common'
   import urlAppend from 'url-append'
   import clone from 'clone'
@@ -198,7 +195,8 @@
     },
     methods: {
       selectCheckbox(selection) {
-        this.$store.dispatch(this.options.gridKey + 'setData', {selection: selection})
+        let select = clone(selection)
+        this.$store.dispatch(this.options.gridKey + 'setData', {selection: select})
       },
       /**
        *  基本思路：创建一个urlObj,每个属性是一个关键词的集合，条件关键词无非就是filter/order等，

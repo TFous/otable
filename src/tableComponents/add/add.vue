@@ -81,6 +81,7 @@
                     v-model="dataMsg[item.key]"
                     filterable
                     remote
+                    :clearable="true"
                     @change="item.remoteMethodChange"
                     reserve-keyword
                     placeholder="请输入关键词"
@@ -123,7 +124,6 @@
   import urlAppend from 'url-append'
   import * as xVuex from '../xVuex.js'
   import * as common from '../common.js'
-  import o from 'o.js'
   import clone from 'clone'
 
   export default {
