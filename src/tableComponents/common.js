@@ -2,13 +2,13 @@ export function filterData(val) {
   let items = val;
   let obj = {};
   items.forEach(function (item) {
-    if (item.add_hide !== 1) {
+    if (item.addLayer !== 'hide') {
       // 測試
       // obj[item.key] = (item.type === 'date' ? 1 : '123')
       obj[item.key] = null
       // obj[item.key] = (item.type === 'date' ? '2017-06-06' : null)
       // obj[item.key] = (item.type === 'number' ? null : '')
-      if (item.add_hide === 'relyOn' || item.add_hide === 'relyOn|show') {
+      if (item.addLayer === 'relyOn' || item.addLayer === 'relyOn|show') {
         obj[item.key] = item.value
       }
     }
@@ -107,6 +107,7 @@ export function isEmptyObject(e) {
   return !0
 }
 
+// 数组去重
 export function uniqueArr(arr) {
   if (arr.length === 0) {
     return arr
@@ -119,4 +120,20 @@ export function uniqueArr(arr) {
     }
   }
   return newArr;
+}
+
+// fetch 求情头 目前没用到。用的是页面的
+export function fetchRequest(url, obj = {}) {
+  const accessToken = JSON.parse(localStorage.getItem('STORAGE_IDENTITY')).access_token
+  const headers = new Headers({
+    'Content-Type': 'application/json; odata.metadata=minimal',
+    'Authorization': `Bearer ${accessToken}`
+  })
+  let initObj = Object.assign({
+    method: 'GET',
+    headers: headers,
+    mode: 'cors',
+    cache: 'default'
+  }, obj)
+  return new Request(url, initObj)
 }

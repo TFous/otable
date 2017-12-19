@@ -4,11 +4,12 @@
       :title="'新增 - '+options.title"
       class="formDialog"
       :close-on-click-modal="false"
+      @close="cleseFn"
       :visible.sync="show"
       :style="addStyle">
       <slot name="main">
-        <el-form :label-position="labelPosition" label-width="150px" :model="dataMsg">
-          <template v-for="(item, key, index) in getOptions.table" v-if="item.addLayer!=='hide'">
+        <el-form ref="addLayer" :label-position="labelPosition" label-width="150px" :model="dataMsg">
+          <template v-for="(item, key, index) in getState.table" v-if="item.addLayer!=='hide'">
             <div class="xtable-left">
               <template v-if="item.type ==='date'">
                 <el-form-item
@@ -22,7 +23,7 @@
                       v-model="dataMsg[item.key]"
                       type="date"
                       placeholder="选择日期"
-                      >
+                    >
                     </el-date-picker>
                   </div>
                 </el-form-item>
@@ -35,11 +36,11 @@
                 >
                   <el-select v-model="dataMsg[item.key]" placeholder="请选择">
                     <el-option
-                      v-for="a in getOptions[item.key]"
+                      v-for="a in item.selects"
                       :key="a.value"
                       :label="a.text"
                       :value="a.value"
-                      >
+                    >
                     </el-option>
                   </el-select>
                 </el-form-item>
@@ -55,9 +56,6 @@
                     placeholder="请输入内容"
                     @change="setNumber(item.key)"
                   ></el-input>
-                  <!--<el-input-number-->
-                    <!--:controls="false"-->
-                    <!--v-model="dataMsg[item.key]"></el-input-number>-->
                 </el-form-item>
               </template>
               <template v-else-if="item.type ==='textarea'">
@@ -71,6 +69,30 @@
                     v-model="dataMsg[item.key]"
                     placeholder="请输入内容"
                   ></el-input>
+                </el-form-item>
+              </template>
+              <template v-else-if="item.type ==='remoteMethod'">
+                <el-form-item
+                  :prop="item.key"
+                  :label="item.title"
+                  :rules="item.rules"
+                >
+                  <el-select
+                    v-model="dataMsg[item.key]"
+                    filterable
+                    remote
+                    @change="item.remoteMethodChange"
+                    reserve-keyword
+                    placeholder="请输入关键词"
+                    :remote-method="item.remoteMethod"
+                    :loading="getParent['loading']">
+                    <el-option
+                      v-for="item in getParent[item.remoteList]"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value">
+                    </el-option>
+                  </el-select>
                 </el-form-item>
               </template>
               <template v-else>
@@ -91,18 +113,21 @@
       </slot>
       <span slot="footer" class="dialog-footer">
         <el-button @click="show = false">取 消</el-button>
-        <el-button type="primary" @click="handleSubmit('addForm')">提 交</el-button>
+        <el-button type="primary" @click="handleSubmit('addLayer')">提 交</el-button>
       </span>
     </el-dialog>
   </div>
 </template>
 <script>
+  import Vue from 'vue'
   import urlAppend from 'url-append'
   import * as xVuex from '../xVuex.js'
   import * as common from '../common.js'
   import o from 'o.js'
+  import clone from 'clone'
+
   export default {
-    data () {
+    data() {
       return {
         labelPosition: 'right', // label 对齐方式
         show: false,
@@ -120,13 +145,12 @@
         default: 'hxLayer',
       }
     },
-    updated () {
+    updated() {
     },
     mounted: function () {
       let _this = this
-      let filterData = common.filterData(_this.getOptions.table)
-      _this.dataMsg = Object.assign({}, filterData)
-
+      let filterData = common.filterData(_this.getState.table)
+      _this.dataMsg = clone(filterData)
       try {
         let arrFn = _this.addFn()
         common.bindFn(_this, arrFn)
@@ -134,63 +158,56 @@
       }
     },
     computed: {
-      getOptions () {
+      getParent() {
+        return this.$parent
+      },
+      getState() {
         return this.$store.state[this.options.gridKey]
       }
     },
     watch: {
-      'getOptions.add_Window_Visible': {
+      'getState.add_Window_Visible': {
         handler: function (val, oldVal) {
           this.show = val
         },
         deep: true
       }
     },
-    updated () {
-    },
     methods: {
-      setNumber (val) {
+      cleseFn(val) {
+        this.$store.dispatch(this.options.gridKey + '_add_Window_Visible')
+      },
+      setNumber(val) {
         this.dataMsg[val] = Number(this.dataMsg[val])
       },
 //      筛选方法
-      remoteMethod (val) {
+      remoteMethod(val) {
       },
-      setAddVisible (val) {
+      setAddVisible(val) {
         this.$store.dispatch(this.options.gridKey + '_add_Window_Visible')
         this.handleReset('addForm')
       },
-      handleSubmit (formName) {
+      handleSubmit(formName) {
         let _self = this
-        let newData = Object.assign({}, _self.dataMsg)
-        console.log(newData)
-//        this.$refs[formName].validate((valid) => {
-//          if (valid) {
-//            _self.bntShow = false
-//            setTimeout(function () {
-//              _self.bntShow = true
-//            }, 2000)
-//            let newData = Object.assign({}, _self.dataMsg)
-//            为date 设置null
-//            for (let item in newData) {
-//              if (newData[item] === '') {
-//                newData[item] = null
-//              }
-//              newData[item] = common.trim(newData[item])  // 去除空格
-//            }
-//            let url = _self.options.api.split('?$filter')[0]
-//            o(url).post(newData).save().then(function (data) {
-//              _self.$Message.success('新增成功')
-//              _self.$store.dispatch(_self.options.gridKey + '_set_refresh')
-//              _self.$store.dispatch(_self.options.gridKey + '_set_state_data', {addSucess: data.data})
-//              _self.setAddVisible() // 关闭弹窗
-//            })
-//          } else {
-//            console.log('error submit!!')
-//            return false
-//          }
-//        })
+        let newData = _self.dataMsg
+        this.$refs[formName].validate((valid) => {
+          if (valid) {
+            console.log(JSON.stringify(newData))
+            let url = this.getState.addUrl
+            let string1 = "{\"WarehousingCompany\":210,\"Warehouse\":4290,\"Variety\":\"CS\",\"Weight\":\"2\",\"Amount\":\"2\"}"
+            let requestDataHeader = Vue.prototype.$api.request(url, {method: 'POST', body: JSON.stringify(newData)})
+            fetch(requestDataHeader).then(resp => {
+              return resp.text()
+            }).then(data => {
+              console.log(data)
+            })
+          } else {
+            console.log('error submit!!')
+            return false;
+          }
+        })
       },
-      handleReset (name) {
+      handleReset(name) {
         this.$refs[name].resetFields()
       }
     }

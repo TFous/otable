@@ -8,10 +8,16 @@
         @filter-change="filterChangeFn"
         @sort-change="sortChangeFn"
         style="width: 100%">
+        <el-table-column
+          v-if="getState.isSelection"
+          type="selection"
+          width="35">
+        </el-table-column>
         <template v-for="(item, index) in getState.table" v-if="item.column==='show'">
           <template v-if="!item.render">
             <template v-if="item.filter === true">
               <el-table-column
+                :fixed="item.fixed"
                 :prop="item.key"
                 :column-key="item.key"
                 :label="item.title"
@@ -23,6 +29,7 @@
             </template>
             <template v-else>
               <el-table-column
+                :fixed="item.fixed"
                 :prop="item.key"
                 :column-key="item.key"
                 :label="item.title"
@@ -279,6 +286,7 @@
       seniorSearchFn(urlObj) {
         let _this = this
         let seniorObj = _this.getState.seniorSearchBox
+        let otherSeniorSearchOpt = _this.getState.otherSeniorSearchOpt
         let seniorSearchType = this.getState.seniorSearchType
         let typeKey, sliceLength
         if (seniorSearchType === false) {
@@ -300,6 +308,37 @@
             valUrl += `(${item} ge ${startTime} and ${item} le ${endTime})${typeKey}`
           }
         }
+//        手动添加的搜索条件
+        for (let item in otherSeniorSearchOpt) {
+          if (otherSeniorSearchOpt[item] instanceof Array === true) {
+            let length = otherSeniorSearchOpt[item].length
+            let i = 0
+            for (; i < length; i++) {
+              // 最后一个是and
+              if (i === (length - 1)) {
+                if (typeof otherSeniorSearchOpt[item][i] === 'number') {
+                  valUrl += `(${item} eq ${otherSeniorSearchOpt[item][i]})${typeKey}`
+                } else if (typeof otherSeniorSearchOpt[item][i] === 'string') {
+                  valUrl += `(${item} eq '${otherSeniorSearchOpt[item][i]}')${typeKey}`
+                }
+              } else {
+                if (typeof otherSeniorSearchOpt[item][i] === 'number') {
+                  valUrl += `(${item} eq ${otherSeniorSearchOpt[item][i]})or`
+                } else if (typeof otherSeniorSearchOpt[item][i] === 'string') {
+                  valUrl += `(${item} eq '${otherSeniorSearchOpt[item][i]}')or`
+                }
+              }
+            }
+          } else {
+            if (typeof otherSeniorSearchOpt[item] === 'number') {
+              valUrl += `(${item} eq ${otherSeniorSearchOpt[item]})${typeKey}`
+            } else if (typeof otherSeniorSearchOpt[item][i] === 'string') {
+              valUrl += `(${item} eq '${otherSeniorSearchOpt[item]}')${typeKey}`
+            }
+          }
+        }
+
+        console.log(valUrl)
         if (valUrl !== '') {
           let url = `$filter=(${valUrl.slice(0, sliceLength)})`
           urlObj['filterUrl'] = _this.isHasKey(urlObj['filterUrl'], url, '$filter=')

@@ -3,12 +3,13 @@
     <el-dialog
       :title="'编辑 - '+ title"
       class="formDialog"
+      @close="setVisible"
       :close-on-click-modal="false"
       :visible.sync="show"
-      >
+    >
       <slot name="main">
-        <el-form :label-position="labelPosition" label-width="150px" :model="eidtData" class="pl100">
-          <template v-for="(item, key, index) in getOptions.table" v-if="item.addLayer!=='hide'">
+        <el-form ref="editLayer" :label-position="labelPosition" label-width="150px" :model="dataMsg" class="pl100">
+          <template v-for="(item, key, index) in getState.table" v-if="item.addLayer!=='hide'">
             <div class="xtable-left">
               <template v-if="item.type ==='date'">
                 <el-form-item
@@ -19,7 +20,7 @@
                   <div class="block">
                     <el-date-picker
                       :editable="false"
-                      v-model="eidtData[item.key]"
+                      v-model="dataMsg[item.key]"
                       type="date"
                       placeholder="选择日期"
                     >
@@ -33,9 +34,9 @@
                   :label="item.title"
                   :rules="item.rules"
                 >
-                  <el-select v-model="eidtData[item.key]" placeholder="请选择">
+                  <el-select v-model="dataMsg[item.key]" placeholder="请选择">
                     <el-option
-                      v-for="a in getOptions[item.key]"
+                      v-for="a in item.selects"
                       :key="a.value"
                       :label="a.text"
                       :value="a.value"
@@ -52,7 +53,7 @@
                 >
                   <el-input-number
                     :controls="false"
-                    v-model="eidtData[item.key]"></el-input-number>
+                    v-model="dataMsg[item.key]"></el-input-number>
                 </el-form-item>
               </template>
               <template v-else-if="item.type ==='textarea'">
@@ -63,9 +64,33 @@
                 >
                   <el-input
                     type="textarea"
-                    v-model="eidtData[item.key]"
+                    v-model="dataMsg[item.key]"
                     placeholder="请输入内容"
                   ></el-input>
+                </el-form-item>
+              </template>
+              <template v-else-if="item.type ==='remoteMethod'">
+                <el-form-item
+                  :prop="item.key"
+                  :label="item.title"
+                  :rules="item.rules"
+                >
+                  <el-select
+                    v-model="dataMsg[item.key]"
+                    filterable
+                    remote
+                    @change="item.remoteMethodChange"
+                    reserve-keyword
+                    placeholder="请输入关键词"
+                    :remote-method="item.remoteMethod"
+                    :loading="getParent['loading']">
+                    <el-option
+                      v-for="item in getParent[item.remoteList]"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value">
+                    </el-option>
+                  </el-select>
                 </el-form-item>
               </template>
               <template v-else>
@@ -75,7 +100,7 @@
                   :rules="item.rules"
                 >
                   <el-input
-                    v-model="eidtData[item.key]"
+                    v-model="dataMsg[item.key]"
                     placeholder="请输入内容"
                   ></el-input>
                 </el-form-item>
@@ -86,7 +111,7 @@
       </slot>
       <span slot="footer" class="dialog-footer">
         <el-button @click="show = false">取 消</el-button>
-        <el-button type="primary" @click="handleSubmit('addForm')">提 交</el-button>
+        <el-button type="primary" @click="handleSubmit('editLayer')">提 交</el-button>
       </span>
     </el-dialog>
   </div>
@@ -95,12 +120,14 @@
   import o from 'o.js'
   import * as common from '../common.js'
   import * as xVuex from '../xVuex.js'
+  import Vue from 'vue'
+
   export default {
-    data () {
+    data() {
       return {
         labelPosition: 'right', // label 对齐方式
         show: false,
-        eidtData: {},
+        dataMsg: {},
         bntShow: true,
         title: ''
       }
@@ -114,7 +141,7 @@
       editFn: Function,
       options: Object
     },
-    beforeMount () {
+    beforeMount() {
     },
     mounted: function () {
       this.$forceUpdate()
@@ -123,74 +150,92 @@
         common.bindFn(this, arrFn)
       } catch (e) {
       }
-      this.title = this.getOptions.edit_Window_Data.Name || this.options.title
+      this.title = this.getState.edit_Window_Data.Name || this.options.title
     },
     computed: {
-      getOptions () {
+      getParent() {
+        return this.$parent
+      },
+      getState() {
         return this.$store.state[this.options.gridKey]
       }
     },
     watch: {
-      'getOptions.edit_Window_Visible': {
+      'getState.edit_Window_Visible': {
         handler: function (val, oldVal) {
-          this.show = !this.show
-          try {
-            this.otherFn()
-          } catch (e) {
-          }
+          this.show = val
           if (val === true) {
             /**
-             * 编辑对象，从this.getOptions.arr 筛选出必须的传给后台，过滤调其他方法新加的一些属性
+             * 编辑对象，从this.getState.table 筛选出必须的传给后台，过滤调其他方法新加的一些属性
              * @type {{}}
              */
             let o = {}
-            for (let attr in this.getOptions.edit_Window_Data) {
-              for (let item of this.getOptions.table) {
+            for (let attr in this.getState.edit_Window_Data) {
+              for (let item of this.getState.table) {
                 if (item.key) {
                   if (item.key === attr) {
-                    o[item.key] = this.getOptions.edit_Window_Data[item.key]
+                    o[item.key] = this.getState.edit_Window_Data[item.key]
                   }
                 }
               }
             }
-            this.eidtData = Object.assign({}, o)
+            this.dataMsg = Object.assign({}, o)
+            this.setInitRemoteMethod()
           } else {
-            this.eidtData = {}
+            this.dataMsg = {}
           }
         },
         deep: false
       }
     },
     methods: {
-//      otherFn () {
-//
-//      },
-      setVisible () {
-        this.$store.dispatch(this.options.gridKey + '_edit_Window_Visible')
-        this.handleReset('editForm')
-      },
-      handleSubmit (formName) {
-//        this.bntShow = false
-        let _self = this
-        this.$refs[formName].validate((valid) => {
-          if (valid) {
-            for(let item in _self.eidtData) {
-              _self.eidtData[item] = common.trim(_self.eidtData[item])
-            }  // 去除空格
-            let url = _self.options.api.split('?$filter')[0]
-            o(url).find(_self.eidtData.Id).patch(_self.eidtData).save().then(function (data) {
-              _self.$Message.success('修改成功')
-              _self.$store.dispatch(_self.options.gridKey + '_set_refresh')
-              _self.setVisible() // 关闭弹窗
-//              _self.bntShow = true
+      setInitRemoteMethod() {
+        let _this = this
+        this.getState.table.forEach(function (item) {
+          if (item.type === 'remoteMethod') {
+            let obj = {}
+            obj.value = _this.getState.edit_Window_Data[item.key]
+            _this.getState.tableData.forEach(function (filterItem) {
+              if (filterItem.Id === _this.dataMsg.Id) {
+                obj.label = filterItem[item.key]
+              }
             })
-          } else {
-            console.log('error submit!!')
-            return false
+            _this.$parent[item.remoteList] = [obj]
           }
         })
       },
-      handleReset (name) {
+      setVisible() {
+        this.$store.dispatch(this.options.gridKey + '_edit_Window_Visible')
+        this.handleReset('editLayer')
+      },
+      handleSubmit(formName) {
+        let _this = this
+        this.$refs[formName].validate((valid) => {
+          if (valid) {
+            for (let item in _this.dataMsg) {
+              _this.dataMsg[item] = common.trim(_this.dataMsg[item])
+            }  // 去除空格
+            console.log(_this.dataMsg)
+            let url = `${this.getState.editUrl}(${_this.dataMsg.Id})`
+            let requestDataHeader = Vue.prototype.$api.request(url, {
+              method: 'PATCH',
+              body: JSON.stringify(_this.dataMsg)
+            })
+            fetch(requestDataHeader).then(resp => {
+              return resp.json()
+            }).then(data => {
+              console.log(data)
+              _this.$Message.success('修改成功')
+              _this.$store.dispatch(_this.options.gridKey + '_set_refresh')
+              _this.setVisible() // 关闭弹窗
+            })
+          } else {
+            console.log('error submit!!')
+            return false;
+          }
+        })
+      },
+      handleReset(name) {
         this.$refs[name].resetFields()
       }
     }

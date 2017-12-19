@@ -116,12 +116,12 @@
             <slot name="seniorSearch"></slot>
             <div style="text-align: right">
               <el-button type="primary" @click="seniorSearchFn">搜索</el-button>
-              <el-tooltip :content="'当前搜索方式: ' + seniorSearchTip" placement="top">
-                <el-switch
-                  @change="seniorSearchTypeToggleFn"
-                  v-model="seniorSearchType">
-                </el-switch>
-              </el-tooltip>
+              <!--<el-tooltip :content="'当前搜索方式: ' + seniorSearchTip" placement="top">-->
+                <!--<el-switch-->
+                  <!--@change="seniorSearchTypeToggleFn"-->
+                  <!--v-model="seniorSearchType">-->
+                <!--</el-switch>-->
+              <!--</el-tooltip>-->
             </div>
           </el-form>
         </el-row>
@@ -139,7 +139,7 @@
   export default {
     data() {
       return {
-        seniorSearchType: false, // 高级搜索方式
+        seniorSearchType: true, // 高级搜索方式
         seniorSearchTip: '列表展示满足任意一个搜索条件的数据', // 高级搜索提示 当seniorSearchType ：false 的文字
         dropList: [],
         checkList: JSON.parse(localStorage.getItem('newColumn')) || [],

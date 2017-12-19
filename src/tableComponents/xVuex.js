@@ -182,7 +182,8 @@ export const options = {
   filterBox: {}, // 存储筛选信息
   // advancedSearchBox: {}, // 存储高级搜索信息
   seniorSearchBox: {}, // 存储高级搜索信息
-  seniorSearchType: false, // 高级搜索方式是and 还是 or
+  seniorSearchType: true, // 高级搜索方式是and 还是 or
+  otherSeniorSearchOpt:{},  // 其他手动添加的高级搜索项 对象内部值必须为数组.ps {key:[123,123]} 目前考虑的是模糊搜索，支持同事筛选多个
   isSeniorSearch: false, // 是否为高级搜索
   timeSearch: true,  // 是否显示时间搜索
   refresh: false,  // 提供一个变量watch 是否需要刷新页面
