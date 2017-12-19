@@ -5,6 +5,7 @@
         :data="getState.tableData"
         border
         :stripe="false"
+        @selection-change="selectCheckbox"
         @filter-change="filterChangeFn"
         @sort-change="sortChangeFn"
         style="width: 100%">
@@ -48,7 +49,8 @@
                   <el-button
                     v-if="renderItem.tag==='button'"
                     @click.native.prevent="renderItem.fn(scope)"
-                    :type="renderItem.type">
+                    :type="renderItem.type"
+                    plain>
                     {{renderItem.text}}
                   </el-button>
                   <a
@@ -121,8 +123,7 @@
        */
       'getState.requestUrl': {
         handler: function (val, oldVal) {
-          if (oldVal !== val) {
-            console.warn(val)
+          if (oldVal !== val && oldVal !== undefined) {
             this.getList()
           }
         },
@@ -167,7 +168,7 @@
        */
       'getState.pager_Size': {
         handler: function (val, oldVal) {
-          if (oldVal !== undefined) {
+          if (oldVal !== undefined && oldVal !== val) {
             this.$store.dispatch(this.options.gridKey + 'setData', {pager_CurrentPage: 1})
             this.getList(val)
           }
@@ -180,7 +181,7 @@
       'getState.pager_CurrentPage': {
         handler: function (val, oldVal) {
           this.$store.dispatch(this.options.gridKey + 'setData', {pager_CurrentPage: val})
-          if (oldVal !== undefined) {
+          if (oldVal !== undefined && oldVal !== val) {
             this.getList()
           }
         },
@@ -196,6 +197,9 @@
 
     },
     methods: {
+      selectCheckbox(selection) {
+        this.$store.dispatch(this.options.gridKey + 'setData', {selection: selection})
+      },
       /**
        *  基本思路：创建一个urlObj,每个属性是一个关键词的集合，条件关键词无非就是filter/order等，
        *  存放之前先判断对象中是否有这个关键词，如果没有直接塞进去，有则在已存在那里继续拼接
@@ -337,8 +341,6 @@
             }
           }
         }
-
-        console.log(valUrl)
         if (valUrl !== '') {
           let url = `$filter=(${valUrl.slice(0, sliceLength)})`
           urlObj['filterUrl'] = _this.isHasKey(urlObj['filterUrl'], url, '$filter=')
@@ -417,8 +419,6 @@
         let searchBtn = this.getState.searchBtn
         this.$store.dispatch(this.options.gridKey + 'setData', {searchBtn: !searchBtn})
       },
-      filterFn(value, row) {
-      },
 //     初始化url,获取数据字典数据
       loadingFn() {
         this.getDicMsg()
@@ -454,10 +454,8 @@
         let requestCountHeader = Vue.prototype.$api.request($countUrl)
         let _this = this
         fetch(requestCountHeader).then(resp => {
-          console.log(resp)
           return resp.text()
         }).then(count => {
-          console.log('count:' + count)
           if (Number(count) === 0) {
             _this.ready = true
             _this.$store.dispatch(_this.options.gridKey + 'setData', {tableData: []})
@@ -542,8 +540,16 @@
           })
         })
       },
+//    刷新
       refreshFn() {
-
+        this.reset()
+        this.getList()
+      },
+      reset () {
+        this.$store.dispatch(this.getState.gridKey + 'setData', {selection: []})
+        this.$store.dispatch(this.getState.gridKey + 'setData', {searchVal: ''})
+        this.$store.dispatch(this.getState.gridKey + 'setData', {filterBox: {}})
+        this.$store.dispatch(this.getState.gridKey + 'setData', {sortBox: {}})
       }
     },
     filters: {}

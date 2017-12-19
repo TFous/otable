@@ -215,7 +215,6 @@
             for (let item in _this.dataMsg) {
               _this.dataMsg[item] = common.trim(_this.dataMsg[item])
             }  // 去除空格
-            console.log(_this.dataMsg)
             let url = `${this.getState.editUrl}(${_this.dataMsg.Id})`
             let requestDataHeader = Vue.prototype.$api.request(url, {
               method: 'PATCH',
@@ -224,7 +223,6 @@
             fetch(requestDataHeader).then(resp => {
               return resp.json()
             }).then(data => {
-              console.log(data)
               _this.$Message.success('修改成功')
               _this.$store.dispatch(_this.options.gridKey + '_set_refresh')
               _this.setVisible() // 关闭弹窗

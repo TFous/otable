@@ -192,14 +192,12 @@
         let newData = _self.dataMsg
         this.$refs[formName].validate((valid) => {
           if (valid) {
-            console.log(JSON.stringify(newData))
             let url = this.getState.addUrl
             let string1 = "{\"WarehousingCompany\":210,\"Warehouse\":4290,\"Variety\":\"CS\",\"Weight\":\"2\",\"Amount\":\"2\"}"
             let requestDataHeader = Vue.prototype.$api.request(url, {method: 'POST', body: JSON.stringify(newData)})
             fetch(requestDataHeader).then(resp => {
               return resp.text()
             }).then(data => {
-              console.log(data)
             })
           } else {
             console.log('error submit!!')

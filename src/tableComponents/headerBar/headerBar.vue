@@ -7,7 +7,7 @@
           <template v-if="refreshShow">
             <slot name="refreshBtn">
               <el-tooltip effect="dark" content="刷新页面，显示全部结果" placement="top-end">
-                <el-button @click="refreshFn">
+                <el-button plain type="" @click="refreshFn">
                   <i class="iconfont icon-refresh"></i>
                 </el-button>
               </el-tooltip>
@@ -17,8 +17,8 @@
           <template v-if="addShow">
             <slot name="addBtn">
               <el-tooltip content="新增" placement="top-end">
-                <el-button type="primary" @click="setAddVisible">
-                  <Icon type="plus"></Icon>
+                <el-button plain type="primary" @click="setAddVisible">
+                  <i class="iconfont icon-add"></i>
                 </el-button>
               </el-tooltip>
             </slot>
@@ -27,16 +27,16 @@
           <template v-if="delShow">
             <slot name="batchBtn">
               <el-tooltip content="批量删除" placement="top-end">
-                <el-button type="error" @click="batchDel">
-                  <Icon type="trash-a"></Icon>
+                <el-button plain type="danger" @click="batchDel">
+                  <i class="iconfont icon-delete"></i>
                 </el-button>
               </el-tooltip>
             </slot>
           </template>
           <slot name="delAfter"></slot>
           <el-dropdown :hide-on-click="false">
-            <el-button type="primary">
-              <i class="el-icon-caret-bottom el-icon--right"></i>
+            <el-button plain type="info">
+              <i class="iconfont icon-set"></i>
             </el-button>
             <el-dropdown-menu slot="dropdown" class="hx-drapMenu">
               <el-checkbox-group v-model="checkList">
@@ -161,10 +161,7 @@
         isSeniorSearch: false, // 高级搜索是否显示
         seniorSearchOptions: [], // 高级搜索选项
         formItem: {}, // 存储高级搜索的值
-        timeSearchShow: true,
         SelectOpints: [],
-        timeSelectKey: '',
-        searchTime: '',
         paramsOption: [],
         paramsValue: '',
         paramsSelect: 'searchAll' // 默认搜索
@@ -222,17 +219,6 @@
       this.setSeniorSearchOptions()
       this.optTables = clone(this.getState.table)
       this.SelectOpints = this.setSelectOpints(this.options.table)
-      /**
-       *   时间搜索是否显示：如果没有date属性则自动隐藏
-       */
-      if (this.SelectOpints.length === 0) {
-        this.timeSearchShow = false
-      }
-      try {
-        this.timeSelectKey = this.SelectOpints[0].value
-      } catch (e) {
-
-      }
       /**
        *  设置默认搜索
        */
@@ -317,7 +303,6 @@
         })
       },
       swichChangeFn(val) {
-        console.log(val)
       },
       column() {
         let newColumn = this.checkList
@@ -343,7 +328,6 @@
         this.$store.dispatch(this.options.gridKey + '_set_state_data', {adSearchBoolean: val})
       },
       refreshFn() {
-        this.searchTime = null
         this.paramsValue = null
         this.$store.dispatch(this.options.gridKey + '_set_refresh')
       },

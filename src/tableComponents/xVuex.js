@@ -24,40 +24,14 @@ function createMutations(state, gridKey) {
         state.sortBox = data
       }
     },
-    /**
-     * // 下面都是老的
-     * @param state
-     * @param val
-     */
     [gridKey + '_ADD_WINDOW_VISIBLE'](state, val) {
       state.add_Window_Visible = !state.add_Window_Visible
     },
     [gridKey + '_DETAILS_WINDOW_VISIBLE'](state, val) {
       state.details_Window_Visible = !state.details_Window_Visible
     },
-    [gridKey + '_EDIT_WINDOW_DATA'](state, data) {
-      state.edit_Window_Data = data
-    },
-    [gridKey + '_DETAILS_WINDOW_DATA'](state, data) {
-      state.details_Window_Data = data
-    },
-    [gridKey + '_DEL_DATA'](state, data) {
-      state.delData = data
-    },
-    [gridKey + '_TABLE_DATA'](state, data) {
-      state.tableData = data
-    },
     [gridKey + '_REFRESH'](state, data) {
       state.refresh = !state.refresh
-    },
-    [gridKey + '_STATE_DATA'](state, data) {
-      Object.assign(state, data)
-    },
-    [gridKey + '_PAGER_DATA'](state, data) {
-      Object.assign(state.pager, data)
-    },
-    ['ADD_NUM'](state, data) {
-      state.num = state.num + data
     },
     [gridKey + '_EDIT_WINDOW_VISIBLE'](state, val) {
       state.edit_Window_Visible = !state.edit_Window_Visible
@@ -131,14 +105,6 @@ export function registerModule(_this, state, gridKey) {
       [gridKey + '_set_sortbox']({dispatch, commit}, val) {
         _this.$store.commit(gridKey + '_SORT_BOX_DATA', val)
       },
-      /**
-       * // 下面都是老的
-       * @param state
-       * @param val
-       */
-      addNum({dispatch, commit}, val) {
-        _this.$store.commit('ADD_NUM', val)
-      },
       [gridKey + '_add_Window_Visible']({dispatch, commit}, val) {
         _this.$store.commit(gridKey + '_ADD_WINDOW_VISIBLE', val)
       },
@@ -147,21 +113,6 @@ export function registerModule(_this, state, gridKey) {
         if (data) {
           _this.$store.commit(gridKey + '_DETAILS_WINDOW_DATA', data)
         }
-      },
-      [gridKey + '_set_details_data']({dispatch, commit}, data) {
-        _this.$store.commit(gridKey + '_DETAILS_WINDOW_DATA', data)
-      },
-      [gridKey + '_set_table_data']({dispatch, commit}, val) {
-        _this.$store.commit(gridKey + '_TABLE_DATA', val)
-      },
-      [gridKey + '_set_del_data']({dispatch, commit}, val) {
-        _this.$store.commit(gridKey + '_DEL_DATA', val)
-      },
-      [gridKey + '_set_pager_data']({dispatch, commit}, obj) {
-        _this.$store.commit(gridKey + '_PAGER_DATA', obj)
-      },
-      [gridKey + '_set_state_data']({dispatch, commit}, obj) {
-        _this.$store.commit(gridKey + '_STATE_DATA', obj)
       },
       [gridKey + '_set_refresh']({dispatch, commit}, obj) {
         _this.$store.commit(gridKey + '_REFRESH', obj)
@@ -185,19 +136,15 @@ export const options = {
   seniorSearchType: true, // 高级搜索方式是and 还是 or
   otherSeniorSearchOpt:{},  // 其他手动添加的高级搜索项 对象内部值必须为数组.ps {key:[123,123]} 目前考虑的是模糊搜索，支持同事筛选多个
   isSeniorSearch: false, // 是否为高级搜索
-  timeSearch: true,  // 是否显示时间搜索
   refresh: false,  // 提供一个变量watch 是否需要刷新页面
-  delData: [],  // 存储批量删除的对象
+  selection:[], // 存储勾选对象
   searchKeys: ['searchAll'], // 存储search对象
   searchVal: '', // 存储search对象
   searchBtn: false, // 存储search对象
   arrCopy: [], // 存储arr原始对象
-  startTime: '', // 存储搜索开始时间
-  endTime: '', // 存储搜索结束时间
-  timeSelectKey: '', // 存储搜索key
   defaultSearch: '',  // 默认 搜索选项
   disabledSearch: false, // 是否禁用搜索下拉 true：禁用
-  pager_size_opts: [5, 10, 15],  // 每页展示数量
+  pager_size_opts: [5, 10, 50],  // 每页展示数量
   pager_Size: 5,   //  默认显示每页数量，和opts第一个一样
   pager_CurrentPage: 1, // 当前第几页
   pager_Total: 0,   // 总页数

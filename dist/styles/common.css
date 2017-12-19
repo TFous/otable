@@ -1,4 +1,3 @@
-@import url(../zTreeStyle/zTreeStyle.css);
 @import url(../fontStyle/iconfont.css);
 .tableBtn .ivu-btn{
   margin:0px 4px;
@@ -55,4 +54,12 @@
 }
 .otable .el-table .cell {
   white-space: nowrap;
+}
+/* header 按钮样式*/
+.pagerHead .iconfont{
+  font-size:12px;
+}
+
+.pagerHead .el-button+.el-button{
+  margin-left:0px;
 }
