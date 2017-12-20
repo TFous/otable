@@ -19,6 +19,7 @@
                 >
                   <div class="block">
                     <el-date-picker
+                      :clearable="true"
                       :editable="false"
                       v-model="dataMsg[item.key]"
                       type="date"
@@ -34,7 +35,7 @@
                   :label="item.title"
                   :rules="item.rules"
                 >
-                  <el-select v-model="dataMsg[item.key]" placeholder="请选择">
+                  <el-select :clearable="true" v-model="dataMsg[item.key]" placeholder="请选择">
                     <el-option
                       v-for="a in item.selects"
                       :key="a.value"
@@ -52,6 +53,7 @@
                   :rules="item.rules"
                 >
                   <el-input
+                    :clearable="true"
                     v-model="dataMsg[item.key]"
                     placeholder="请输入内容"
                     @change="setNumber(item.key)"
@@ -65,6 +67,7 @@
                   :rules="item.rules"
                 >
                   <el-input
+                    :clearable="true"
                     type="textarea"
                     v-model="dataMsg[item.key]"
                     placeholder="请输入内容"
@@ -103,6 +106,7 @@
                   :rules="item.rules"
                 >
                   <el-input
+                    :clearable="true"
                     v-model="dataMsg[item.key]"
                     placeholder="请输入内容"
                   ></el-input>

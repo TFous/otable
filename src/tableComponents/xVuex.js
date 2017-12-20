@@ -3,6 +3,9 @@ function createMutations(state, gridKey) {
     [gridKey + '_SET_DATA'](state, data) {
       Object.assign(state, data)
     },
+    [gridKey + '_EDIT_WINDOW_DATA'](state, data) {
+      state.edit_Window_Data = data
+    },
     [gridKey + '_FILTER_BOX_DATA'](state, data) {
       // reset
       if (data === null) {
@@ -39,41 +42,23 @@ function createMutations(state, gridKey) {
   }
 }
 
-function initOpt(_this, opt) {
+function initOpt(opt) {
   let table = opt.table
   let newTable = []
   table.forEach(function (item) {
     let newColunm = Object.assign({
       addLayer: 'show',
-      editLayer: 'show',
+      editLayer: 'show', // show hide
       searchKey: 'show',
-      column: 'show',
-      width: 'auto',
-      type: 'string'
+      readOnly: false, // 修改的是否是否是只读不可改
+      column: 'show',  // 表格列是否展示  show  hide
+      width: 'auto', // 180
+      type: 'string'  // type: string number select remoteMethod
     }, item)
-    // if(newColunm.type==='select'){
-    //   let filters = getSelect(_this, newColunm.key)
-    //   newColunm.filters = filters
-    // }
     newTable.push(newColunm)
   })
   opt.table = newTable
   return opt;
-}
-
-function getSelect(_this, key) {
-  let newArr = []
-  let aa = _this.$store.state[key]
-  try {
-    _this.$store.state[key].forEach(function (item) {
-      let obj = {}
-      obj.text = item.Code
-      obj.value = item.Value
-      newArr.push(obj)
-    })
-  } catch (e) {
-  }
-  return newArr
 }
 
 export function registerModule(_this, state, gridKey) {
@@ -90,7 +75,7 @@ export function registerModule(_this, state, gridKey) {
   if (_this.$store.state[gridKey]) {
     return
   }
-  let initState = initOpt(_this, state)
+  let initState = initOpt(state)
   var mutations = createMutations(initState, gridKey)
   _this.$store.registerModule(gridKey, {
     state: initState,
@@ -133,10 +118,10 @@ export const options = {
   filterBox: {}, // 存储筛选信息
   seniorSearchBox: {}, // 存储高级搜索信息
   seniorSearchType: true, // 高级搜索方式是and 还是 or
-  otherSeniorSearchOpt:{},  // 其他手动添加的高级搜索项 对象内部值必须为数组.ps {key:[123,123]} 目前考虑的是模糊搜索，支持同事筛选多个
+  otherSeniorSearchOpt: {},  // 其他手动添加的高级搜索项 对象内部值必须为数组.ps {key:[123,123]} 目前考虑的是模糊搜索，支持同事筛选多个
   isSeniorSearch: false, // 是否为高级搜索
   refresh: false,  // 提供一个变量watch 是否需要刷新页面
-  selection:[], // 存储勾选对象
+  selection: [], // 存储勾选对象
   searchKeys: ['searchAll'], // 存储search对象
   searchVal: '', // 存储search对象
   searchBtn: false, // 存储search对象

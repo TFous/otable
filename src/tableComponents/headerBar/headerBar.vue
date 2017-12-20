@@ -34,23 +34,23 @@
             </slot>
           </template>
           <slot name="delAfter"></slot>
-          <el-dropdown :hide-on-click="false">
-            <el-button plain type="info">
-              <i class="iconfont icon-set"></i>
-            </el-button>
-            <el-dropdown-menu slot="dropdown" class="hx-drapMenu">
-              <el-checkbox-group v-model="checkList">
-                <template v-for="item in dropList">
-                  <el-dropdown-item>
-                    <el-checkbox :label="item"></el-checkbox>
-                  </el-dropdown-item>
-                </template>
-              </el-checkbox-group>
-              <el-dropdown-item divided>
-                <el-button type="primary" @click="column">确定</el-button>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
+          <!--<el-dropdown :hide-on-click="false">-->
+          <!--<el-button plain type="info">-->
+          <!--<i class="iconfont icon-set"></i>-->
+          <!--</el-button>-->
+          <!--<el-dropdown-menu slot="dropdown" class="hx-drapMenu">-->
+          <!--<el-checkbox-group v-model="checkList">-->
+          <!--<template v-for="item in dropList">-->
+          <!--<el-dropdown-item>-->
+          <!--<el-checkbox :label="item"></el-checkbox>-->
+          <!--</el-dropdown-item>-->
+          <!--</template>-->
+          <!--</el-checkbox-group>-->
+          <!--<el-dropdown-item divided>-->
+          <!--<el-button type="primary" @click="column">确定</el-button>-->
+          <!--</el-dropdown-item>-->
+          <!--</el-dropdown-menu>-->
+          <!--</el-dropdown>-->
         </el-col>
         <el-col :span="8">
           <div class="searchWrap">
@@ -272,7 +272,7 @@
         let tableOptions = this.getState.table
         let _this = this
         tableOptions.forEach(function (item) {
-          if (item.search_hide !== 1 && item.type !== 'select') {
+          if (item.searchKey !== 1 && item.type !== 'select') {
             _this.seniorSearchOptions.push(item)
           }
         })
@@ -332,7 +332,6 @@
               return resp.json()
             })
           )).then(datas => {
-            console.log(datas)
             _this.$message({
               type: 'success',
               message: '删除成功!'
@@ -368,7 +367,7 @@
           value: 'searchAll'
         }]
         for (let item of data) {
-          if (item.search_hide !== 1 && item.type !== 'select' && item.type !== 'date') {
+          if (item.searchKey !== 1 && item.type !== 'select' && item.type !== 'date') {
             let o = {}
             o.label = item.title
             o.value = item.key

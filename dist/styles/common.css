@@ -67,3 +67,7 @@
 .pagerHead .el-button+.el-button{
   margin-left:0px;
 }
+
+.xtable-left .el-input-number .el-input__inner{
+  text-align: left;
+}

@@ -9,7 +9,7 @@
     >
       <slot name="main">
         <el-form ref="editLayer" :label-position="labelPosition" label-width="150px" :model="dataMsg" class="pl100">
-          <template v-for="(item, key, index) in getState.table" v-if="item.addLayer!=='hide'">
+          <template v-for="(item, key, index) in getState.table" v-if="item.editLayer!=='hide'">
             <div class="xtable-left">
               <template v-if="item.type ==='date'">
                 <el-form-item
@@ -19,6 +19,8 @@
                 >
                   <div class="block">
                     <el-date-picker
+                      :disabled="item.readOnly"
+                      :clearable="item.readOnly===true?false:true"
                       :editable="false"
                       v-model="dataMsg[item.key]"
                       type="date"
@@ -34,7 +36,10 @@
                   :label="item.title"
                   :rules="item.rules"
                 >
-                  <el-select v-model="dataMsg[item.key]" placeholder="请选择">
+                  <el-select
+                    :clearable="true"
+                    :disabled="item.readOnly"
+                    v-model="dataMsg[item.key]" placeholder="请选择">
                     <el-option
                       v-for="a in item.selects"
                       :key="a.value"
@@ -51,9 +56,13 @@
                   :label="item.title"
                   :rules="item.rules"
                 >
-                  <el-input-number
-                    :controls="false"
-                    v-model="dataMsg[item.key]"></el-input-number>
+                  <el-input
+                    :disabled="item.readOnly"
+                    :clearable="item.readOnly===true?false:true"
+                    v-model="dataMsg[item.key]"
+                    placeholder="请输入内容"
+                    @change="setNumber(item.key)"
+                  ></el-input>
                 </el-form-item>
               </template>
               <template v-else-if="item.type ==='textarea'">
@@ -63,6 +72,8 @@
                   :rules="item.rules"
                 >
                   <el-input
+                    :disabled="item.readOnly"
+                    :clearable="item.readOnly===true?false:true"
                     type="textarea"
                     v-model="dataMsg[item.key]"
                     placeholder="请输入内容"
@@ -76,10 +87,11 @@
                   :rules="item.rules"
                 >
                   <el-select
+                    :disabled="item.readOnly"
                     v-model="dataMsg[item.key]"
                     filterable
                     remote
-                    :clearable="true"
+                    :clearable="item.readOnly===true?false:true"
                     @change="item.remoteMethodChange"
                     reserve-keyword
                     placeholder="请输入关键词"
@@ -101,6 +113,8 @@
                   :rules="item.rules"
                 >
                   <el-input
+                    :disabled="item.readOnly"
+                    :clearable="item.readOnly===true?false:true"
                     v-model="dataMsg[item.key]"
                     placeholder="请输入内容"
                   ></el-input>
@@ -189,6 +203,9 @@
       }
     },
     methods: {
+      setNumber(val) {
+        this.dataMsg[val] = Number(this.dataMsg[val])
+      },
       setInitRemoteMethod() {
         let _this = this
         this.getState.table.forEach(function (item) {

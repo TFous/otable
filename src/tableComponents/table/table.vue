@@ -354,7 +354,7 @@
           let valUrl = ``
           if (searchKey === 'searchAll') {
             for (let item of _this.getState.table) {
-              if ((item.type === '' || item.type === 'textarea' || item.type === 'string') && item.search_hide !== 1) {
+              if ((item.type === '' || item.type === 'textarea' || item.type === 'string') && item.searchKey !== 1) {
                 valUrl += `(contains(${item.key},'${searchVal}'))or`
               } else if (item.type === 'number' && Number.isNaN(Number(searchVal)) !== true) {
                 valUrl += `(${item.key} eq ${Number(searchVal)})or`
